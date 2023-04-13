@@ -6,7 +6,6 @@ from ctre.sensors import CANCoder, AbsoluteSensorRange
 from constants import DriveConstants
 import math
 
-# ModuleConfig = namedtuple('ModuleConfig', ['sd_prefix', 'zero', 'inverted', 'allow_reverse'])
 
 
 class SwerveModule:
