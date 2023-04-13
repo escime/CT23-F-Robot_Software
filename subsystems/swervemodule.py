@@ -7,7 +7,6 @@ from constants import DriveConstants
 import math
 
 
-
 class SwerveModule:
     driveMotor: CANSparkMax
     rotateMotor: CANSparkMax
