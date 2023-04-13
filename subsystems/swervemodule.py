@@ -12,8 +12,6 @@ class SwerveModule:
     rotateMotor: CANSparkMax
     encoder: CANCoder
 
-    # cfg: ModuleConfig
-
     def __init__(self, dm, rm, enc, mod_offset, turn_invert, drive_invert):
         self.driveMotor = dm
         self.rotateMotor = rm
