@@ -4,7 +4,6 @@ import commands2.cmd
 import wpilib
 
 from constants import OIConstants, DriveConstants
-# from commands.defaultdrive import DefaultDrive
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from wpilib import SmartDashboard, SendableChooser
@@ -29,18 +28,10 @@ class RobotContainer:
 
         # The driver's controller
         self.driver_controller = wpilib.XboxController(OIConstants.kDriverControllerPort)
+        self.operator_controller = wpilib.Joystick(2)
 
         # Configure the button bindings
         self.configureButtonBindings()
-
-        # Set the default drive command
-        # self.robot_drive.setDefaultCommand(
-        #         DefaultDrive(self.robot_drive,
-        #                      self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
-        #                      self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
-        #                      self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed,
-        #                      False)
-        # )
 
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
             lambda: self.robot_drive.drive(self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
@@ -50,6 +41,8 @@ class RobotContainer:
                                            True),
             [self.robot_drive]
         ))
+
+
 
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 

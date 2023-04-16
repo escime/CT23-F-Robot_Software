@@ -87,33 +87,6 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.set_desired_state(swerve_module_states[2])
         self.m_BR.set_desired_state(swerve_module_states[3])
 
-    def drive(self, x_speed, y_speed, rot, field_relative, teleop) -> None:
-        if not teleop:
-            if field_relative:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                    ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
-            else:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed, y_speed, rot))
-        else:
-            if abs(x_speed) >= 0.1 or abs(y_speed) >= 0.1 or abs(rot) >= 0.1:
-                if field_relative:
-                    swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                        ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
-                else:
-                    swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                        ChassisSpeeds(x_speed, y_speed, rot))
-            else:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                    ChassisSpeeds(0, 0, 0)
-                )
-
-        SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.kMaxSpeed)
-
-        self.m_FL.set_desired_state(swerve_module_states[0])
-        self.m_FR.set_desired_state(swerve_module_states[1])
-        self.m_BL.set_desired_state(swerve_module_states[2])
-        self.m_BR.set_desired_state(swerve_module_states[3])
-
     def drive_lock(self) -> None:
         swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
             ChassisSpeeds(0, 0, 0.01))
