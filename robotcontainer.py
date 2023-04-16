@@ -9,6 +9,7 @@ from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from wpilib import SmartDashboard, SendableChooser
 import autoplays
+from commands.default_leds import DefaultLEDs
 
 
 class RobotContainer:
@@ -50,6 +51,8 @@ class RobotContainer:
             [self.robot_drive]
         ))
 
+        self.leds.setDefaultCommand(DefaultLEDs(self.leds))
+
         # SmartDashboard.putData(commands2.CommandScheduler.getInstance())
         self.m_chooser = SendableChooser()
         self.m_chooser.setDefaultOption("No-op", "No-op")
@@ -62,9 +65,10 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-        # In theory this should re-zero the gyro when the A button is pressed
-        # self.driver_controller.A().onTrue(self.robot_drive.zero_heading())
-        # self.driver_controller.getAButtonPressed()
+        # All of this code is sort of hack-and-slashed together to make it happen the easy way. All of these commands
+        # should be refactored as their own files with their own command parameters - it's not good form to create them
+        # all in-line as I've done here. It just takes more time and this was a good way to test the commmands
+        # themselves were actually working. If I keep any of these, I'll probably fix this section.
         commands2.button.JoystickButton(self.driver_controller, 1).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
         commands2.button.JoystickButton(self.driver_controller, 2).whenPressed(
