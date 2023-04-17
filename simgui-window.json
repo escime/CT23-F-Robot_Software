@@ -17,22 +17,22 @@
   "Window": {
     "###Addressable LEDs": {
       "Collapsed": "0",
-      "Pos": "216,152",
-      "Size": "142,335"
+      "Pos": "254,17",
+      "Size": "170,394"
     },
     "###FMS": {
       "Collapsed": "0",
-      "Pos": "6,675",
-      "Size": "283,146"
+      "Pos": "9,714",
+      "Size": "336,164"
     },
     "###Joysticks": {
       "Collapsed": "0",
-      "Pos": "377,510",
-      "Size": "796,240"
+      "Pos": "374,549",
+      "Size": "976,278"
     },
     "###NetworkTables": {
       "Collapsed": "0",
-      "Pos": "386,175",
+      "Pos": "455,26",
       "Size": "937,231"
     },
     "###Other Devices": {
@@ -43,12 +43,12 @@
     "###System Joysticks": {
       "Collapsed": "0",
       "Pos": "6,400",
-      "Size": "192,218"
+      "Size": "232,254"
     },
     "###Timing": {
       "Collapsed": "0",
       "Pos": "6,187",
-      "Size": "135,173"
+      "Size": "162,194"
     },
     "Debug##Default": {
       "Collapsed": "0",
@@ -58,7 +58,7 @@
     "Robot State": {
       "Collapsed": "0",
       "Pos": "5,20",
-      "Size": "92,99"
+      "Size": "109,114"
     }
   }
 }

@@ -9,6 +9,7 @@ from subsystems.leds import LEDs
 from wpilib import SmartDashboard, SendableChooser
 import autoplays
 from commands.default_leds import DefaultLEDs
+# from helpers.custom_hid import CustomHID
 
 
 class RobotContainer:
@@ -22,13 +23,15 @@ class RobotContainer:
     def __init__(self) -> None:
         # The robot's subsystems
         self.robot_drive = DriveSubsystem()
-        self.leds = LEDs(0, 150, 0.05)
+        self.leds = LEDs(0, 145, 0.05)
         # The following line is intended to implement vision based pose estimation
         # self.vision_system = VisionSubsystem()
 
         # The driver's controller
         self.driver_controller = wpilib.XboxController(OIConstants.kDriverControllerPort)
         self.operator_controller = wpilib.Joystick(2)
+        # self.driver_controller_raw = CustomHID(0, "xbox")
+        # self.driver_controller = self.driver_controller_raw.get_xbox_controller()
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -41,8 +44,6 @@ class RobotContainer:
                                            True),
             [self.robot_drive]
         ))
-
-
 
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
