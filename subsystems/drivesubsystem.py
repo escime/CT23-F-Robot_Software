@@ -87,6 +87,9 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.set_desired_state(swerve_module_states[2])
         self.m_BR.set_desired_state(swerve_module_states[3])
 
+    def drive_slow(self, x_speed, y_speed, rot, field_relative, teleop, slow: float) -> None:
+        self.drive(x_speed * slow, y_speed * slow, rot * slow, field_relative, teleop)
+
     def drive_lock(self) -> None:
         swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
             ChassisSpeeds(0, 0, 0.01))

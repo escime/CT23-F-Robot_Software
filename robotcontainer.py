@@ -9,7 +9,7 @@ from subsystems.leds import LEDs
 from wpilib import SmartDashboard, SendableChooser
 import autoplays
 from commands.default_leds import DefaultLEDs
-# from helpers.custom_hid import CustomHID
+from helpers.custom_hid import CustomHID
 
 
 class RobotContainer:
@@ -28,10 +28,8 @@ class RobotContainer:
         # self.vision_system = VisionSubsystem()
 
         # The driver's controller
-        self.driver_controller = wpilib.XboxController(OIConstants.kDriverControllerPort)
-        self.operator_controller = wpilib.Joystick(2)
-        # self.driver_controller_raw = CustomHID(0, "xbox")
-        # self.driver_controller = self.driver_controller_raw.get_xbox_controller()
+        self.driver_controller_raw = CustomHID(0, "xbox")
+        self.driver_controller = self.driver_controller_raw.get_xbox_controller()
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -41,9 +39,20 @@ class RobotContainer:
                                            self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
                                            self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed,
                                            True,
-                                           True),
+                                           False),
             [self.robot_drive]
         ))
+
+        # Here's some code to adapt the current drive command to the new CustomHID layout. Need real robot to test,
+        # so commented out for now.
+        # self.robot_drive.setDefaultCommand(commands2.cmd.run(
+        #     lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.07) * DriveConstants.kMaxSpeed,
+        #                                    self.driver_controller_raw.get_axis("LX", 0.07) * DriveConstants.kMaxSpeed,
+        #                                    self.driver_controlle_raw.get_axis("RX", 0.07) * DriveConstants.kMaxAngularSpeed,
+        #                                    True,
+        #                                    False),
+        #     [self.robot_drive]
+        # ))
 
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
@@ -59,28 +68,25 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-        # All of this code is sort of hack-and-slashed together to make it happen the easy way. All of these commands
-        # should be refactored as their own files with their own command parameters - it's not good form to create them
-        # all in-line as I've done here. It just takes more time and this was a good way to test the commmands
-        # themselves were actually working. If I keep any of these, I'll probably fix this section.
-        commands2.button.JoystickButton(self.driver_controller, 1).whenPressed(
+
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("A")).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
-        commands2.button.JoystickButton(self.driver_controller, 2).whenPressed(
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
             commands2.cmd.run(lambda: self.leds.rainbow_shift(True), [self.leds]))
-        commands2.button.JoystickButton(self.driver_controller, 3).whenPressed(
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
             commands2.cmd.runOnce(lambda: self.leds.rainbow_shift(False), [self.leds]))
-        commands2.button.JoystickButton(self.driver_controller, 4).whenPressed(
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenPressed(
             commands2.cmd.run(lambda: self.leds.heading_lock(self.robot_drive.get_heading()), [self.leds]))
-        commands2.button.JoystickButton(self.driver_controller, 6).whenHeld(
+        commands2.button.Button(lambda: self.driver_controller_raw.get_trigger("L", 0.5)).whenHeld(
             commands2.cmd.run(lambda: self.robot_drive.drive_lock(), [self.robot_drive]))
-        commands2.button.JoystickButton(self.driver_controller, 5).whenHeld(commands2.cmd.run(
-            lambda: self.robot_drive.drive(self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed / 2,
-                                           self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed / 2,
-                                           self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed / 2,
-                                           True,
-                                           True),
-            [self.robot_drive]
-        ))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_trigger("R", 0.1)).whenHeld(
+            commands2.cmd.run(lambda: self.robot_drive.drive_slow(
+                self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed,
+                True,
+                True,
+                0.5), [self.robot_drive]))
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main {@link Robot} class.

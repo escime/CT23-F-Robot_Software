@@ -51,7 +51,6 @@ class LEDs(commands2.SubsystemBase):
             self.record_time = self.timer.get()
         self.m_led.setData(self.m_ledBuffer)
 
-
     def heading_lock(self, heading):
         pos = int(-1 * (heading * 145 / 360) + 145/2)
         if pos > 143:
@@ -60,6 +59,6 @@ class LEDs(commands2.SubsystemBase):
             pos = 3
         heading_pattern = [AddressableLED.LEDData(0, 0, 0)] * (pos - 2)
         heading_pattern = heading_pattern + [AddressableLED.LEDData(255, 0, 0)] * 5
-        heading_pattern = heading_pattern + [AddressableLED.LEDData(0, 0, 0)] * (150-len(heading_pattern))
+        heading_pattern = heading_pattern + [AddressableLED.LEDData(0, 0, 0)] * (145-len(heading_pattern))
         self.m_led.setData(heading_pattern)
 

@@ -11,7 +11,7 @@ class CustomHID:
         if hid == "xbox":
             self.controller = wpilib.XboxController(port)
             self.controller_type = "xbox"
-        if hid == "ps4":
+        elif hid == "ps4":
             self.controller = wpilib.PS4Controller(port)
             self.controller_type = "ps4"
         else:
@@ -22,32 +22,31 @@ class CustomHID:
         value = False
         if self.controller_type == "xbox":
             if button == "A":
-                value = self.controller.button(0)
+                value = self.controller.getAButton()
             if button == "B":
-                value = self.controller.button(1)
+                value = self.controller.getBButton()
             if button == "X":
-                value = self.controller.button(2)
+                value = self.controller.getXButton()
             if button == "Y":
-                value = self.controller.button(3)
+                value = self.controller.getYButton()
             if button == "LB":
-                value = self.controller.button(4)
+                value = self.controller.getLeftBumper()
             if button == "RB":
-                value = self.controller.button(5)
+                value = self.controller.getRightBumper()
             if button == "VIEW":
-                value = self.controller.button(6)
+                value = self.controller.getBackButton()
             if button == "MENU":
-                value = self.controller.button(7)
+                value = self.controller.getStartButton()
             if button == "LTHUMB":
-                value = self.controller.button(8)
+                value = self.controller.getLeftStickButton()
             if button == "RTHUMB":
-                value = self.controller.button(9)
+                value = self.controller.getRightStickButton()
         return value
 
     def get_trigger(self, trigger: str, threshold: float) -> bool:
         value = False
         if self.controller_type == "xbox":
             if trigger == "R":
-                print("checkin")
                 if self.controller.getRawAxis(3) >= threshold:
                     value = True
             if trigger == "L":
