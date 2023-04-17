@@ -1,7 +1,6 @@
 import commands2
 import commands2.button
 import commands2.cmd
-import wpilib
 
 from constants import OIConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
@@ -21,19 +20,19 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
-        # The robot's subsystems
+        # Instantiate subsystems using their constructors.
         self.robot_drive = DriveSubsystem()
         self.leds = LEDs(0, 145, 0.05)
-        # The following line is intended to implement vision based pose estimation
-        # self.vision_system = VisionSubsystem()
+        # self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
 
-        # The driver's controller
+        # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(0, "xbox")
-        self.driver_controller = self.driver_controller_raw.get_xbox_controller()
+        self.driver_controller = self.driver_controller_raw.get_xbox_controller()  # Retained for legacy support.
 
-        # Configure the button bindings
+        # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()
 
+        # Setup default drive command.
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
             lambda: self.robot_drive.drive(self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
                                            self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
@@ -54,9 +53,11 @@ class RobotContainer:
         #     [self.robot_drive]
         # ))
 
+        # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
-        # SmartDashboard.putData(commands2.CommandScheduler.getInstance())
+        # Setup autonomous selector on the dashboard.
+        # TODO Recreate the LabVIEW structure of placing the files on the rio and parsing out. Will require new class.
         self.m_chooser = SendableChooser()
         self.m_chooser.setDefaultOption("No-op", "No-op")
         self.m_chooser.addOption("Leave_Community", "Leave_Community")
@@ -68,7 +69,6 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("A")).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
@@ -89,8 +89,8 @@ class RobotContainer:
                 0.5), [self.robot_drive]))
 
     def getAutonomousCommand(self) -> commands2.cmd:
-        """Use this to pass the autonomous command to the main {@link Robot} class.
-        :returns: the command to run in autonomous
+        """Use this to pass the autonomous command to the main Robot class.
+        Returns the command to run in autonomous
         """
         if self.m_chooser.getSelected() == "Leave_Community":
             return autoplays.path_planner_test(self.robot_drive)

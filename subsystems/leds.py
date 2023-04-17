@@ -35,6 +35,7 @@ class LEDs(commands2.SubsystemBase):
         self.record_time = self.timer.get()
 
     def rainbow_shift(self, state):
+        # TODO Break out state check to its own function. Using the rainbow_shift as a catch-all is gimmicky af.
         if state:
             if self.timer.get() - self.animation_delay > self.record_time:
                 self.m_ledBuffer = self.rainbow_pattern
