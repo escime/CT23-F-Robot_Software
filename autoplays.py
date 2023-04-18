@@ -1,12 +1,12 @@
-from wpimath.trajectory import TrajectoryConfig, TrajectoryGenerator
-from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+# from wpimath.trajectory import TrajectoryConfig, TrajectoryGenerator
+# from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.controller import PIDController, ProfiledPIDController
 import math
 import commands2
 import commands2.button
 import commands2.cmd
-from constants import AutoConstants, DriveConstants, OIConstants
-from subsystems.drivesubsystem import DriveSubsystem
+from constants import AutoConstants, DriveConstants
+# from subsystems.drivesubsystem import DriveSubsystem
 from pathplannerlib import PathPlanner
 
 

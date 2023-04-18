@@ -1,4 +1,4 @@
-import wpilib
+# import wpilib
 from rev import CANSparkMax
 from ctre.sensors import CANCoder
 import commands2
@@ -8,7 +8,7 @@ from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants
 import navx
-from wpilib import SmartDashboard, SerialPort
+from wpilib import SerialPort
 
 
 class DriveSubsystem(commands2.SubsystemBase):
@@ -66,7 +66,8 @@ class DriveSubsystem(commands2.SubsystemBase):
                 swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
                     ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
             else:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed, y_speed, rot))
+                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
+                                                                                                      y_speed, rot))
         else:
             if abs(x_speed) >= 0.1 or abs(y_speed) >= 0.1 or abs(rot) >= 0.1:
                 if field_relative:

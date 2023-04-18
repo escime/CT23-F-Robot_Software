@@ -26,8 +26,8 @@ class RobotContainer:
         # self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
 
         # Setup driver & operator controllers.
-        self.driver_controller_raw = CustomHID(0, "xbox")
-        self.driver_controller = self.driver_controller_raw.get_xbox_controller()  # Retained for legacy support.
+        self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
+        self.driver_controller = self.driver_controller_raw.get_controller()  # Retained for legacy support.
 
         # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()

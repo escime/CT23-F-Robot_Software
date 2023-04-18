@@ -47,10 +47,12 @@ class SwerveModule:
         dm.burnFlash()
 
     def get_state(self):
-        return SwerveModuleState(self.drive_encoder.getVelocity(), Rotation2d(math.radians(self.encoder.getAbsolutePosition())))
+        return SwerveModuleState(self.drive_encoder.getVelocity(), Rotation2d(math.radians(
+            self.encoder.getAbsolutePosition())))
 
     def get_position(self):
-        return SwerveModulePosition(self.drive_encoder.getPosition(), Rotation2d(math.radians(self.encoder.getAbsolutePosition())))
+        return SwerveModulePosition(self.drive_encoder.getPosition(), Rotation2d(math.radians(
+            self.encoder.getAbsolutePosition())))
 
     def set_desired_state(self, desired_state):
         if abs(desired_state.angle.radians() - math.radians(self.encoder.getAbsolutePosition())) >= math.radians(40):
@@ -60,7 +62,8 @@ class SwerveModule:
             state = desired_state
         drive_output = self._drive_pid_controller.calculate(self.drive_encoder.getVelocity(), state.speed)
         drive_ff = self.drive_feed_forward.calculate(state.speed)
-        rotate_output = self._rotate_pid_controller.calculate(math.radians(self.encoder.getAbsolutePosition()), state.angle.radians())
+        rotate_output = self._rotate_pid_controller.calculate(math.radians(self.encoder.getAbsolutePosition()),
+                                                              state.angle.radians())
         # rotate_ff = self.drive_feed_forward.calculate(self._rotate_pid_controller.getSetpoint())
         # above line may be an issue. missing velocity???
         # self._rotate_pid_controller.setReference(state.angle.radians(), CANSparkMax.ControlType.kPosition)

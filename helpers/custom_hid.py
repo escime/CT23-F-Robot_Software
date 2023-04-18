@@ -2,8 +2,6 @@ import wpilib
 
 
 class CustomHID:
-    # Create a controller object default (arbitrarily selected Xbox on port 0)
-    controller: wpilib.XboxController
     controller_type: str
 
     def __init__(self, port: int, hid: str) -> None:
@@ -41,22 +39,64 @@ class CustomHID:
                 value = self.controller.getLeftStickButton()
             if button == "RTHUMB":
                 value = self.controller.getRightStickButton()
+        if self.controller_type == "ps4":
+            if button == "A":
+                value = self.controller.getCrossButton()
+            if button == "B":
+                value = self.controller.getCircleButton()
+            if button == "X":
+                value = self.controller.getSquareButton()
+            if button == "Y":
+                value = self.controller.getTriangleButton()
+            if button == "LB":
+                value = self.controller.getL1Button()
+            if button == "RB":
+                value = self.controller.getR1Button()
+            if button == "VIEW":
+                value = self.controller.getShareButton()
+            if button == "MENU":
+                value = self.controller.getOptionsButton()
+            if button == "LTHUMB":
+                value = self.controller.getL3Button()
+            if button == "RTHUMB":
+                value = self.controller.getR3Button()
+            if button == "TOUCHPAD":
+                value = self.controller.getTouchpad()
+            if button == "PS":
+                value = self.controller.getPSButton()
         return value
 
     def get_trigger(self, trigger: str, threshold: float) -> bool:
         value = False
-        if self.controller_type == "xbox":
+        if self.controller_type == "xbox" or "generic":
             if trigger == "R":
                 if self.controller.getRawAxis(3) >= threshold:
                     value = True
             if trigger == "L":
                 if self.controller.getRawAxis(2) >= threshold:
                     value = True
+        if self.controller_type == "ps4":
+            if trigger == "R":
+                axis = self.controller.getR2Axis()
+                if axis < 0:
+                    axis = (axis * -1) * 0.5
+                else:
+                    axis = (axis * 0.5) + 0.5
+                if axis >= threshold:
+                    value = True
+            if trigger == "L":
+                axis = self.controller.getL2Axis()
+                if axis < 0:
+                    axis = (axis * -1) * 0.5
+                else:
+                    axis = (axis * 0.5) + 0.5
+                if axis >= threshold:
+                    value = True
         return value
 
     def get_axis(self, axis: str, deadband: float) -> float:
         value = 0.0
-        if self.controller_type == "xbox":
+        if self.controller_type == "xbox" or "generic":
             if axis == "LX":
                 if self.controller.getRawAxis(0) >= deadband:
                     value = self.controller.getRawAxis(0)
@@ -66,6 +106,19 @@ class CustomHID:
             if axis == "RX":
                 if self.controller.getRawAxis(4) >= deadband:
                     value = self.controller.getRawAxis(4)
+            if axis == "RY":
+                if self.controller.getRawAxis(5) >= deadband:
+                    value = self.controller.getRawAxis(5)
+        if self.controller_type == "ps4":
+            if axis == "LX":
+                if self.controller.getRawAxis(0) >= deadband:
+                    value = self.controller.getRawAxis(0)
+            if axis == "LY":
+                if self.controller.getRawAxis(1) >= deadband:
+                    value = self.controller.getRawAxis(1)
+            if axis == "RX":
+                if self.controller.getRawAxis(2) >= deadband:
+                    value = self.controller.getRawAxis(2)
             if axis == "RY":
                 if self.controller.getRawAxis(5) >= deadband:
                     value = self.controller.getRawAxis(5)
@@ -92,7 +145,10 @@ class CustomHID:
         return value
 
     def set_rumble(self, strength: float) -> None:
-        self.controller.setRumble(wpilib.XboxController.RumbleType.kBothRumble, strength)
+        if self.controller_type == "xbox":
+            self.controller.setRumble(wpilib.XboxController.RumbleType.kBothRumble, strength)
+        if self.controller_type == "ps4":
+            self.controller.setRumble(wpilib.PS4Controller.RumbleType.kBothRumble, strength)
 
-    def get_xbox_controller(self) -> wpilib.XboxController:
+    def get_controller(self):
         return self.controller

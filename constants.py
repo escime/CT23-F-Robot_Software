@@ -47,6 +47,7 @@ class AutoConstants:
 
 class OIConstants:
     kDriverControllerPort = 0
+    kOperatorControllerPort = 1
 
 
 class ModuleConstants:

@@ -1,5 +1,3 @@
-import math
-
 import commands2
 from wpilib import AddressableLED, Timer
 
@@ -62,4 +60,3 @@ class LEDs(commands2.SubsystemBase):
         heading_pattern = heading_pattern + [AddressableLED.LEDData(255, 0, 0)] * 5
         heading_pattern = heading_pattern + [AddressableLED.LEDData(0, 0, 0)] * (145-len(heading_pattern))
         self.m_led.setData(heading_pattern)
-
