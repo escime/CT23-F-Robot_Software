@@ -56,7 +56,7 @@ class SwerveModule:
 
     def set_desired_state(self, desired_state):
         if abs(desired_state.angle.radians() - math.radians(self.encoder.getAbsolutePosition())) >= math.radians(40):
-            state = self.optimize_module(desired_state)
+            state = self.optimize_module(desired_state)  # TODO Test new optimization routine from 461
             # state = SwerveModuleState.optimize(desired_state, Rotation2d(math.radians(self.encoder.getAbsolutePosition())))
         else:
             state = desired_state
