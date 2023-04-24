@@ -1,5 +1,6 @@
 import commands2
 from wpilib import AddressableLED, Timer
+import random
 
 
 class LEDs(commands2.SubsystemBase):
@@ -13,6 +14,7 @@ class LEDs(commands2.SubsystemBase):
     purple_pattern = []
     notifier_length = 3
     notifier_state = [AddressableLED.LEDData(255, 0, 0)] * notifier_length
+    heat = []
 
     def __init__(self, port: int, length: int, num: int, animation_speed: float) -> None:
         super().__init__()
@@ -45,6 +47,9 @@ class LEDs(commands2.SubsystemBase):
         self.purple_pattern = [AddressableLED.LEDData(149, 50, 168)] * 10
         for i in range(0, self.length - 10):
             self.purple_pattern.append(AddressableLED.LEDData(0, 0, 0))
+
+        self.heat = [255] * self.length
+
 
     def clear_buffer(self) -> None:
         """Clear the master buffer of all data."""
@@ -102,3 +107,36 @@ class LEDs(commands2.SubsystemBase):
         heading_pattern = heading_pattern + [AddressableLED.LEDData(0, 0, 0)] * (self.length-len(heading_pattern))
         self.m_ledBuffer = heading_pattern
         self.set_chain()
+
+    def fire(self, color: [], inverted: bool):
+
+        if self.timer.get() - self.animation_delay > self.record_time:
+            # Cool current strip
+            for i in range(0, self.length):
+                self.heat[i] = max(0, self.heat[i] - random.randint(0, int(5/self.length + 2)))
+
+            # Generate random sparks in the strip
+            for j in range(2, self.length - 2):
+                if random.randint(0, 1000) >= 800:
+                    self.heat[j] = random.randint(160, 255)
+                    self.heat[j + 1] = random.randint(self.heat[j] - 50, self.heat[j])
+                    self.heat[j + 2] = random.randint(self.heat[j] - 100, self.heat[j])
+                    self.heat[j - 1] = random.randint(self.heat[j] - 50, self.heat[j])
+                    self.heat[j - 2] = random.randint(self.heat[j] - 100, self.heat[j])
+            if inverted:
+                for m in range(0, self.length):
+                    self.heat[m] = min(255, int((1 - ((self.length - m) / self.length)) * self.heat[m] * 1.3))
+            else:
+                for m in range(0, self.length):
+                    self.heat[m] = min(255, int(((self.length - m) / self.length) * self.heat[m] * 1.3))
+
+            # Transform brightness into color
+            temp_buffer = [AddressableLED.LEDData(0, 0, 0)] * self.length
+            for k in range(0, self.length):
+                r = int((self.heat[k] / 255) * color[0])
+                g = int((self.heat[k] / 255) * color[1])
+                b = int((self.heat[k] / 255) * color[2])
+                temp_buffer[k] = AddressableLED.LEDData(r, g, b)
+            self.record_time = self.timer.get()
+            self.m_ledBuffer = temp_buffer
+        self.set_chain_with_notifier()

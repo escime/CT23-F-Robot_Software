@@ -23,7 +23,7 @@ class RobotContainer:
     def __init__(self) -> None:
         # Instantiate subsystems using their constructors.
         self.robot_drive = DriveSubsystem()
-        self.leds = LEDs(0, 145, 2, 0.03)
+        self.leds = LEDs(0, 35, 2, 0.03)
         self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
 
         commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system])
@@ -58,6 +58,13 @@ class RobotContainer:
 
         # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
+
+        # TODO Test the command trigger system.
+        # Setup for connecting the vision system to the LED notifier system.
+        commands2.Trigger(lambda: self.vision_system.has_targets()).onTrue(
+            commands2.cmd.runOnce(lambda: self.leds.set_notifier("GREEN"), [self.leds]))
+        commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
+            commands2.cmd.runOnce(lambda: self.leds.set_notifier("RED"), [self.leds]))
 
         # Setup autonomous selector on the dashboard.
         # TODO Recreate the LabVIEW structure of placing the files on the rio and parsing out. Will require new class.
@@ -96,6 +103,8 @@ class RobotContainer:
             commands2.cmd.runOnce(lambda: self.leds.set_notifier("BLUE"), [self.leds]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("W")).whenPressed(
             commands2.cmd.runOnce(lambda: self.leds.set_notifier("RED"), [self.leds]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("E")).whenPressed(
+            commands2.cmd.run(lambda: self.leds.fire([170, 0, 255], False), [self.leds]))
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.
