@@ -23,7 +23,7 @@ class RobotContainer:
     def __init__(self) -> None:
         # Instantiate subsystems using their constructors.
         self.robot_drive = DriveSubsystem()
-        self.leds = LEDs(0, 35, 2, 0.03)
+        self.leds = LEDs(0, 35, 2, 0.03, "RGB")
         self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
 
         commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system])
