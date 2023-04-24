@@ -144,6 +144,12 @@ class CustomHID:
             value = "NW"
         return value
 
+    def get_d_pad_pull(self, direction: str):
+        if self.get_d_pad() == direction:
+            return True
+        else:
+            return False
+
     def set_rumble(self, strength: float) -> None:
         if self.controller_type == "xbox":
             self.controller.setRumble(wpilib.XboxController.RumbleType.kBothRumble, strength)

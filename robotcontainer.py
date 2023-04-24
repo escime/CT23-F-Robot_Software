@@ -5,6 +5,7 @@ import commands2.cmd
 from constants import OIConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
+from subsystems.visionsubsystem import VisionSubsystem
 from wpilib import SmartDashboard, SendableChooser
 import autoplays
 from commands.default_leds import DefaultLEDs
@@ -22,8 +23,10 @@ class RobotContainer:
     def __init__(self) -> None:
         # Instantiate subsystems using their constructors.
         self.robot_drive = DriveSubsystem()
-        self.leds = LEDs(0, 145, 0.05)
-        # self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
+        self.leds = LEDs(0, 145, 2, 0.03)
+        self.vision_system = VisionSubsystem()  # TODO testing required once Limelight is installed on Viper.
+
+        commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system])
 
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
@@ -72,9 +75,9 @@ class RobotContainer:
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("A")).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
-            commands2.cmd.run(lambda: self.leds.rainbow_shift(True), [self.leds]))
+            commands2.cmd.run(lambda: self.leds.rainbow_shift(), [self.leds]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
-            commands2.cmd.runOnce(lambda: self.leds.rainbow_shift(False), [self.leds]))
+            commands2.cmd.runOnce(lambda: self.leds.clear_pattern, [self.leds]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenPressed(
             commands2.cmd.run(lambda: self.leds.heading_lock(self.robot_drive.get_heading()), [self.leds]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_trigger("L", 0.5)).whenHeld(
@@ -87,6 +90,12 @@ class RobotContainer:
                 True,
                 True,
                 0.5), [self.robot_drive]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("N")).whenPressed(
+            commands2.cmd.runOnce(lambda: self.leds.set_notifier("GREEN"), [self.leds]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("S")).whenPressed(
+            commands2.cmd.runOnce(lambda: self.leds.set_notifier("BLUE"), [self.leds]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("W")).whenPressed(
+            commands2.cmd.runOnce(lambda: self.leds.set_notifier("RED"), [self.leds]))
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.

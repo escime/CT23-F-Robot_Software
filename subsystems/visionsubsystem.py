@@ -3,7 +3,7 @@ import wpimath.units
 from ntcore import NetworkTableInstance
 from wpilib import DriverStation, Timer
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
-from drivesubsystem import DriveSubsystem
+from subsystems.drivesubsystem import DriveSubsystem
 
 
 class VisionSubsystem(commands2.SubsystemBase):
@@ -50,13 +50,13 @@ class VisionSubsystem(commands2.SubsystemBase):
 #     def get_latency(self):
 #         return Timer.getFPGATimestamp() - wpimath.units.millisecondsToSeconds(self.tl)
 
-    def periodic(self) -> None:
-        self.update_values()
-
-        if self.has_targets():
-            current_position = DriveSubsystem.get_pose(self)
-            vision_estimate = self.vision_estimate_pose()
-
-            if abs(current_position.x() - vision_estimate.x()) < 1 and \
-                    abs(current_position.y() - vision_estimate.y()) < 1:
-                DriveSubsystem.reset_odometry(self, vision_estimate)
+    # def periodic(self) -> None:
+    #     self.update_values()
+    #
+    #     if self.has_targets():
+    #         current_position = DriveSubsystem.get_pose(self)
+    #         vision_estimate = self.vision_estimate_pose()
+    #
+    #         if abs(current_position.x() - vision_estimate.x()) < 1 and \
+    #                 abs(current_position.y() - vision_estimate.y()) < 1:
+    #             DriveSubsystem.reset_odometry(self, vision_estimate)
