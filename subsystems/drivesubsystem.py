@@ -10,7 +10,7 @@ from wpimath.controller import ProfiledPIDController, PIDController
 from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants, AutoConstants
 import navx
-from wpilib import SerialPort
+from wpilib import SerialPort, SmartDashboard
 from pathplannerlib import PathPlannerTrajectory
 
 
@@ -87,9 +87,13 @@ class DriveSubsystem(commands2.SubsystemBase):
         SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.kMaxSpeed)
 
         self.m_FL.set_desired_state(swerve_module_states[0])
+        SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
         self.m_FR.set_desired_state(swerve_module_states[1])
+        SmartDashboard.putNumber("FR Target", swerve_module_states[1].angle.degrees())
         self.m_BL.set_desired_state(swerve_module_states[2])
+        SmartDashboard.putNumber("BL Target", swerve_module_states[2].angle.degrees())
         self.m_BR.set_desired_state(swerve_module_states[3])
+        SmartDashboard.putNumber("BR Target", swerve_module_states[3].angle.degrees())
 
     def drive_slow(self, x_speed, y_speed, rot, field_relative, teleop, slow: float) -> None:
         self.drive(x_speed * slow, y_speed * slow, rot * slow, field_relative, teleop)
@@ -115,7 +119,17 @@ class DriveSubsystem(commands2.SubsystemBase):
         # print("FR: " + str(self.m_FR.get_position()))
         # print("BL: " + str(self.m_BL.get_position()))
         # print("BR: " + str(self.m_BR.get_position()))
-        # SmartDashboard.putData("Robot Heading", self.gyro.getRotation2d().degrees())
+        SmartDashboard.putNumber("Robot Heading", self.gyro.getRotation2d().degrees())
+        SmartDashboard.putNumber("Robot Pitch", self.gyro.getPitch())
+        SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())
+        SmartDashboard.putNumber("FL Speed", self.m_FL.get_state().speed)
+        SmartDashboard.putNumber("FR Angle", self.m_FR.get_state().angle.degrees())
+        SmartDashboard.putNumber("FR Speed", self.m_FR.get_state().speed)
+        SmartDashboard.putNumber("BL Angle", self.m_BL.get_state().angle.degrees())
+        SmartDashboard.putNumber("BL Speed", self.m_BL.get_state().speed)
+        SmartDashboard.putNumber("BR Angle", self.m_BR.get_state().angle.degrees())
+        SmartDashboard.putNumber("BR Speed", self.m_BR.get_state().speed)
+        SmartDashboard.putString("Current Command", str(self.getCurrentCommand()))
 
     def get_pose(self):
         return self.m_odometry.getEstimatedPosition()

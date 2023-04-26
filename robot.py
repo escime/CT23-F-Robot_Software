@@ -1,6 +1,6 @@
 from commands2 import Command, CommandScheduler, TimedCommandRobot
 from robotcontainer import RobotContainer
-from wpilib import run
+from wpilib import run, CameraServer
 
 
 class Robot(TimedCommandRobot):
@@ -10,6 +10,7 @@ class Robot(TimedCommandRobot):
 
     def robotInit(self) -> None:
         """Initialize the robot through the RobotContainer object and prep the default autonomous command (None)"""
+        CameraServer.launch()
         self.m_robotcontainer = RobotContainer()
         self.m_autonomous_command = None
 

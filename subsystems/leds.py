@@ -15,6 +15,7 @@ class LEDs(commands2.SubsystemBase):
     notifier_length = 3
     notifier_state = [AddressableLED.LEDData(255, 0, 0)] * notifier_length
     heat = []
+    current_state = "purple_chaser"
 
     def __init__(self, port: int, length: int, num: int, animation_speed: float, style: str) -> None:
         super().__init__()
@@ -62,7 +63,6 @@ class LEDs(commands2.SubsystemBase):
 
         self.heat = [255] * self.length
 
-
     def clear_buffer(self) -> None:
         """Clear the master buffer of all data."""
         self.m_ledBuffer = self.clear_pattern
@@ -107,6 +107,7 @@ class LEDs(commands2.SubsystemBase):
             self.rainbow_pattern = self.rainbow_pattern[1:] + self.rainbow_pattern[:1]
             self.record_time = self.timer.get()
         self.set_chain_with_notifier()
+        self.current_state = "rainbow_shift"
 
     def purple_chaser(self):
         """Configure the LED code for a purple chaser (2023 Charged Up Default)."""
@@ -115,6 +116,7 @@ class LEDs(commands2.SubsystemBase):
             self.purple_pattern = self.purple_pattern[1:] + self.purple_pattern[:1]
             self.record_time = self.timer.get()
         self.set_chain_with_notifier()
+        self.current_state = "purple_chaser"
 
     def heading_lock(self, heading):
         """Configure the LED code for a demo of robot heading tracking."""
@@ -128,6 +130,7 @@ class LEDs(commands2.SubsystemBase):
         heading_pattern = heading_pattern + [AddressableLED.LEDData(0, 0, 0)] * (self.length-len(heading_pattern))
         self.m_ledBuffer = heading_pattern
         self.set_chain()
+        self.current_state = "heading_lock"
 
     def fire(self, color: [], inverted: bool):
 
@@ -168,3 +171,4 @@ class LEDs(commands2.SubsystemBase):
             self.record_time = self.timer.get()
             self.m_ledBuffer = temp_buffer
         self.set_chain_with_notifier()
+        self.current_state = "fire"

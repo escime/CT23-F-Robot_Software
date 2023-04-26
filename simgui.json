@@ -4,6 +4,13 @@
       "window": {
         "visible": true
       }
+    },
+    "Other Devices": {
+      "SPARK MAX [10]": {
+        "header": {
+          "open": true
+        }
+      }
     }
   },
   "NTProvider": {

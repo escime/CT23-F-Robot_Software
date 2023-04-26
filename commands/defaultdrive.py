@@ -24,6 +24,8 @@ class DefaultDrive(commands2.CommandBase):
 
         self.addRequirements([self.drive])
 
-    def execute(self) -> None:
-        print("LOOK HERE PLEASE: " + str(self.x_speed))
+    def initialize(self) -> None:
         self.drive.drive(self.x_speed, self.y_speed, self.rot, self.field_relative, self.teleop)
+
+    def isFinished(self) -> bool:
+        return True
