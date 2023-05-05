@@ -7,10 +7,15 @@ import math
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive4Kinematics
 from wpimath.trajectory import TrapezoidProfile
-# import wpimath.units
+import wpimath.units
 
 
 class DriveConstants:
+    wheel_diameter = wpimath.units.inchesToMeters(4)
+    wheel_circumference = wheel_diameter * math.pi
+    drive_gear_ratio = 6.75
+    angle_gear_ratio = 21.43
+
     kEncoderResolution = 4096
     kWheelDiameterInches = 4
     kWheelRadius = 4*0.0254*0.5
@@ -22,8 +27,8 @@ class DriveConstants:
     d_velocity_conversion_factor = 0.0007885761
     # (1/6.746031745) * 0.319185544
     d_position_conversion_factor = 0.047314566  # L2 ratio is 6.746031745
-    kMaxSpeed = 10  # Set max speed in m/s
-    kMaxAngularSpeed = 11  # Set max rotation speed rot/s
+    kMaxSpeed = 4.5  # Set max speed in m/s
+    kMaxAngularSpeed = 10  # Set max rotation speed rot/s
     kGyroReversed = False
 
     m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters

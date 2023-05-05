@@ -12,7 +12,7 @@ class SwerveModule:
     rotateMotor: CANSparkMax
     encoder: CANCoder
 
-    def __init__(self, dm, rm, enc, mod_offset, turn_invert, drive_invert):
+    def __init__(self, dm: CANSparkMax, rm: CANSparkMax, enc, mod_offset, turn_invert, drive_invert):
         self.driveMotor = dm
         self.rotateMotor = rm
         # self.encoder = rm.getEncoder()
@@ -21,6 +21,7 @@ class SwerveModule:
 
         self.drive_encoder = self.driveMotor.getEncoder()
         self.drive_encoder.setVelocityConversionFactor(DriveConstants.d_velocity_conversion_factor)
+        # self.drive_encoder.setVelocityConversionFactor(((1 * 60) / DriveConstants.wheel_circumference) * DriveConstants.drive_gear_ratio * 4096 / 600)
         self.drive_encoder.setPositionConversionFactor(DriveConstants.d_position_conversion_factor)
         self.encoder.setPositionToAbsolute()
         self.encoder.configMagnetOffset(mod_offset)
@@ -33,7 +34,7 @@ class SwerveModule:
         self._requested_speed = 0
 
         self._drive_pid_controller = PIDController(0.7, 0, 0)  # Put in module constants later
-        self._rotate_pid_controller = PIDController(0.7, 0, 0)
+        self._rotate_pid_controller = PIDController(2, 0, 0)
         self._rotate_pid_controller.enableContinuousInput(-math.pi, math.pi)
 
         # self._drive_pid_controller.setTolerance(0.05, 0.05)
@@ -41,6 +42,10 @@ class SwerveModule:
         # self.rotate_feed_forward = SimpleMotorFeedforwardMeters(0.14165, 2.8026, 0.034594)  adjust these numbers later
         self.drive_feed_forward = SimpleMotorFeedforwardMeters(0.22/12, 1.0/12, 0.23/12)  # adjust these numbers later
 
+        rm.setClosedLoopRampRate(0.0)
+        rm.setOpenLoopRampRate(0.25)
+        dm.setClosedLoopRampRate(0.0)
+        dm.setOpenLoopRampRate(0.25)
         rm.setIdleMode(CANSparkMax.IdleMode.kBrake)
         dm.setIdleMode(CANSparkMax.IdleMode.kBrake)
         rm.burnFlash()
@@ -55,11 +60,11 @@ class SwerveModule:
             self.encoder.getAbsolutePosition())))
 
     def set_desired_state(self, desired_state):
-        if abs(desired_state.angle.radians() - math.radians(self.encoder.getAbsolutePosition())) >= math.radians(40):
-            state = self.optimize_module(desired_state)  # TODO Test new optimization routine from 461
-            # state = SwerveModuleState.optimize(desired_state, Rotation2d(math.radians(self.encoder.getAbsolutePosition())))
-        else:
-            state = desired_state
+        state = self.optimize_module(desired_state)
+        # if abs(desired_state.angle.radians() - math.radians(self.encoder.getAbsolutePosition())) >= math.radians(40):
+        #     state = self.optimize_module(desired_state)
+        # else:
+        #     state = desired_state
         drive_output = self._drive_pid_controller.calculate(self.drive_encoder.getVelocity(), state.speed)
         drive_ff = self.drive_feed_forward.calculate(state.speed)
         rotate_output = self._rotate_pid_controller.calculate(math.radians(self.encoder.getAbsolutePosition()),

@@ -98,29 +98,29 @@ class CustomHID:
         value = 0.0
         if self.controller_type == "xbox" or "generic":
             if axis == "LX":
-                if self.controller.getRawAxis(0) >= deadband:
+                if abs(self.controller.getRawAxis(0)) >= deadband:
                     value = self.controller.getRawAxis(0)
             if axis == "LY":
-                if self.controller.getRawAxis(1) >= deadband:
+                if abs(self.controller.getRawAxis(1)) >= deadband:
                     value = self.controller.getRawAxis(1)
             if axis == "RX":
-                if self.controller.getRawAxis(4) >= deadband:
+                if abs(self.controller.getRawAxis(4)) >= deadband:
                     value = self.controller.getRawAxis(4)
             if axis == "RY":
-                if self.controller.getRawAxis(5) >= deadband:
+                if abs(self.controller.getRawAxis(5)) >= deadband:
                     value = self.controller.getRawAxis(5)
         if self.controller_type == "ps4":
             if axis == "LX":
-                if self.controller.getRawAxis(0) >= deadband:
+                if abs(self.controller.getRawAxis(0)) >= deadband:
                     value = self.controller.getRawAxis(0)
             if axis == "LY":
-                if self.controller.getRawAxis(1) >= deadband:
+                if abs(self.controller.getRawAxis(1)) >= deadband:
                     value = self.controller.getRawAxis(1)
             if axis == "RX":
-                if self.controller.getRawAxis(2) >= deadband:
+                if abs(self.controller.getRawAxis(2)) >= deadband:
                     value = self.controller.getRawAxis(2)
             if axis == "RY":
-                if self.controller.getRawAxis(5) >= deadband:
+                if abs(self.controller.getRawAxis(5)) >= deadband:
                     value = self.controller.getRawAxis(5)
         return value
 

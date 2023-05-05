@@ -18,7 +18,8 @@
       "/FMSInfo": "FMSInfo",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
       "/LiveWindow/Ungrouped/class frc2::SubsystemBase": "Subsystem",
-      "/SmartDashboard/Auto Select": "String Chooser"
+      "/SmartDashboard/Auto Select": "String Chooser",
+      "/SmartDashboard/Field": "Field2d"
     }
   }
 }

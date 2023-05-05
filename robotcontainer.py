@@ -10,7 +10,6 @@ from wpilib import SmartDashboard, SendableChooser
 import autoplays
 from commands.default_leds import DefaultLEDs
 from commands.notifier_led import NotifierLEDs
-from commands.get_IMU import GetIMU
 from helpers.custom_hid import CustomHID
 
 
@@ -38,31 +37,20 @@ class RobotContainer:
         # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()
 
-        # Setup default drive command.
+        # Here's some code to adapt the current drive command to the new CustomHID layout. Need real robot to test,
+        # so commented out for now.
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
-            lambda: self.robot_drive.drive(self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
-                                           self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
-                                           self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed,
+            lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                                           self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                                           self.driver_controller_raw.get_axis("RX", 0.06) * DriveConstants.kMaxAngularSpeed,
                                            True,
                                            False),
             [self.robot_drive]
         ))
 
-        # Here's some code to adapt the current drive command to the new CustomHID layout. Need real robot to test,
-        # so commented out for now.
-        # self.robot_drive.setDefaultCommand(commands2.cmd.run(
-        #     lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.07) * DriveConstants.kMaxSpeed,
-        #                                    self.driver_controller_raw.get_axis("LX", 0.07) * DriveConstants.kMaxSpeed,
-        #                                    self.driver_controlle_raw.get_axis("RX", 0.07) * DriveConstants.kMaxAngularSpeed,
-        #                                    True,
-        #                                    False),
-        #     [self.robot_drive]
-        # ))
-
         # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
-        # TODO Test the command trigger system.
         # Setup for connecting the vision system to the LED notifier system.
         commands2.Trigger(lambda: self.vision_system.has_targets()).onTrue(
             NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
@@ -84,16 +72,23 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
+        # Press "A" on pilot controller to reset IMU heading
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("A")).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
+
+        # Press "B" on pilot controller to set LEDs into "Rainbow Shift" pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
             commands2.cmd.run(lambda: self.leds.rainbow_shift(), [self.leds]))
+
+        # Press "X" on pilot controller to clear the currently running LED pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
             commands2.cmd.runOnce(lambda: self.leds.clear_pattern, [self.leds]))
-        commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenPressed(
-            commands2.cmd.run(lambda: self.leds.heading_lock(self.robot_drive.get_heading()), [self.leds]))
+
+        # Hold left trigger on pilot controller to enable drive lock
         commands2.button.Button(lambda: self.driver_controller_raw.get_trigger("L", 0.5)).whenHeld(
             commands2.cmd.run(lambda: self.robot_drive.drive_lock(), [self.robot_drive]))
+
+        # Hold right trigger on pilot controller to enable slow mode at 50%
         commands2.button.Button(lambda: self.driver_controller_raw.get_trigger("R", 0.1)).whenHeld(
             commands2.cmd.run(lambda: self.robot_drive.drive_slow(
                 self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
@@ -102,8 +97,37 @@ class RobotContainer:
                 True,
                 True,
                 0.5), [self.robot_drive]))
-        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("E")).whenPressed(
-            commands2.cmd.run(lambda: self.leds.fire([170, 0, 255], False), [self.leds]))
+
+        # Press any direction on the D-pad to enable PID snap to that equivalent angle based on field orientation
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("W")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
+                90
+                ), [self.robot_drive]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("N")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
+                0
+            ), [self.robot_drive]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("E")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
+                -90
+            ), [self.robot_drive]))
+        commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("S")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
+                self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
+                180
+            ), [self.robot_drive]))
+
+        # Reset robot perceived pose based on current vision data
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenPressed(
+            commands2.cmd.run(lambda: self.vision_system.reset_hard_odo(), [self.vision_system])
+        )
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.
