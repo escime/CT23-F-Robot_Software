@@ -13,75 +13,90 @@ class SwerveModule:
     encoder: CANCoder
 
     def __init__(self, dm: CANSparkMax, rm: CANSparkMax, enc, mod_offset, turn_invert, drive_invert):
+        # Connect the passed items to default variables.
         self.driveMotor = dm
         self.rotateMotor = rm
-        # self.encoder = rm.getEncoder()
+        # The following line is for the swap to REV through bore encoders.
+        # self.encoder = rm.getAbsoluteEncoder()
         self.encoder = enc
-        # self.absolute_check = rm.getAbsoluteEncoder()
-
         self.drive_encoder = self.driveMotor.getEncoder()
+
+        # Set several config items relating to encoders.
         self.drive_encoder.setVelocityConversionFactor(DriveConstants.d_velocity_conversion_factor)
-        # self.drive_encoder.setVelocityConversionFactor(((1 * 60) / DriveConstants.wheel_circumference) * DriveConstants.drive_gear_ratio * 4096 / 600)
         self.drive_encoder.setPositionConversionFactor(DriveConstants.d_position_conversion_factor)
         self.encoder.setPositionToAbsolute()
         self.encoder.configMagnetOffset(mod_offset)
         self.encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180)
 
+        # Invert motors based on the passthrough on instantiation.
         self.driveMotor.setInverted(drive_invert)
         self.rotateMotor.setInverted(turn_invert)
 
+        # Set initial state as pointed straight forward @ zero speed.
         self._requested_turn = 0
         self._requested_speed = 0
 
-        self._drive_pid_controller = PIDController(0.7, 0, 0)  # Put in module constants later
-        self._rotate_pid_controller = PIDController(2, 0, 0)
+        # Instantiate PID controllers for azimuth and drive. Set azimuth controller to work in circular frame.
+        self._drive_pid_controller = PIDController(DriveConstants.drive_controller_PID[0],
+                                                   DriveConstants.drive_controller_PID[1],
+                                                   DriveConstants.drive_controller_PID[2])
+        self._rotate_pid_controller = PIDController(DriveConstants.azimuth_controller_PID[0],
+                                                    DriveConstants.azimuth_controller_PID[1],
+                                                    DriveConstants.azimuth_controller_PID[2])
         self._rotate_pid_controller.enableContinuousInput(-math.pi, math.pi)
 
-        # self._drive_pid_controller.setTolerance(0.05, 0.05)
+        # Add feed forward for drive controller. These constants were grabbed from 1678, need tuned.
+        self.drive_feed_forward = SimpleMotorFeedforwardMeters(DriveConstants.drive_controller_FF[0],
+                                                               DriveConstants.drive_controller_FF[1],
+                                                               DriveConstants.drive_controller_FF[2])
 
-        # self.rotate_feed_forward = SimpleMotorFeedforwardMeters(0.14165, 2.8026, 0.034594)  adjust these numbers later
-        self.drive_feed_forward = SimpleMotorFeedforwardMeters(0.22/12, 1.0/12, 0.23/12)  # adjust these numbers later
-
-        rm.setClosedLoopRampRate(0.0)
-        rm.setOpenLoopRampRate(0.25)
-        dm.setClosedLoopRampRate(0.0)
-        dm.setOpenLoopRampRate(0.25)
+        # Set additional constraints on each SPARK MAX controller, including open & closed loop ramp rates, current
+        # limits, and idle mode. Then burn to flash memory on each controller.
+        rm.setClosedLoopRampRate(DriveConstants.closed_loop_ramp)
+        rm.setOpenLoopRampRate(DriveConstants.open_loop_ramp)
+        dm.setClosedLoopRampRate(DriveConstants.closed_loop_ramp)
+        dm.setOpenLoopRampRate(DriveConstants.open_loop_ramp)
+        rm.setSmartCurrentLimit(DriveConstants.azimuth_current_limit)
+        dm.setSmartCurrentLimit(DriveConstants.drive_current_limit)
         rm.setIdleMode(CANSparkMax.IdleMode.kBrake)
         dm.setIdleMode(CANSparkMax.IdleMode.kBrake)
         rm.burnFlash()
         dm.burnFlash()
 
     def get_state(self):
+        """Get the current SwerveModuleState object."""
         return SwerveModuleState(self.drive_encoder.getVelocity(), Rotation2d(math.radians(
             self.encoder.getAbsolutePosition())))
 
     def get_position(self):
+        """Get the current SwerveModulePosition object."""
         return SwerveModulePosition(self.drive_encoder.getPosition(), Rotation2d(math.radians(
             self.encoder.getAbsolutePosition())))
 
     def set_desired_state(self, desired_state):
+        """Set the targets for the Swerve Module to meet."""
+        # Optimize module orientation based on current orientation. Subroutine courtesy of Team 461.
         state = self.optimize_module(desired_state)
-        # if abs(desired_state.angle.radians() - math.radians(self.encoder.getAbsolutePosition())) >= math.radians(40):
-        #     state = self.optimize_module(desired_state)
-        # else:
-        #     state = desired_state
+
+        # Calculate the PID and FF controllers for the module's motors.
         drive_output = self._drive_pid_controller.calculate(self.drive_encoder.getVelocity(), state.speed)
         drive_ff = self.drive_feed_forward.calculate(state.speed)
         rotate_output = self._rotate_pid_controller.calculate(math.radians(self.encoder.getAbsolutePosition()),
                                                               state.angle.radians())
-        # rotate_ff = self.drive_feed_forward.calculate(self._rotate_pid_controller.getSetpoint())
-        # above line may be an issue. missing velocity???
-        # self._rotate_pid_controller.setReference(state.angle.radians(), CANSparkMax.ControlType.kPosition)
-        # CANSparkMax.getPIDController().setReference()
 
+        # Set the voltage of each motor based on the PID and FF values. Will likely deprecate when swapping to
+        # REV through bore encoder.
         self.driveMotor.setVoltage(drive_output + drive_ff)
         self.rotateMotor.setVoltage(rotate_output)
 
     def reset_encoders(self):
-        # self.encoder.setPosition(0)
+        """Reset the drive encoder to its zero position. Should not be used in normal software as it results in
+        irretrievable odometry data loss."""
         self.drive_encoder.setPosition(0)
 
     def optimize_module(self, desired_state: SwerveModuleState) -> SwerveModuleState:
+        """Python port of Team 461's module optimization code. I could comment all this, but they didn't, and I had
+        to figure out what it did on my own. So you have to do that too."""
         inverted = False
         desired_degrees = desired_state.angle.degrees()  # 360.0
         if desired_degrees < 0.0:

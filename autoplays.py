@@ -1,5 +1,3 @@
-# from wpimath.trajectory import TrajectoryConfig, TrajectoryGenerator
-# from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.controller import PIDController, ProfiledPIDController
 import math
 import commands2
@@ -40,7 +38,7 @@ def path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialC
     path3 = drive.follow_trajectory(path_group[2], False)
     return commands2.SequentialCommandGroup(
         path1,
-        commands2.cmd.run(leds.rainbow_shift(True)),
+        commands2.cmd.run(leds.rainbow_shift()),
         commands2.WaitCommand(1),
         commands2.ParallelCommandGroup(
             path2,

@@ -37,10 +37,18 @@ class DriveConstants:
     m_BR_location = Translation2d(-0.289, -0.289)
     m_kinematics = SwerveDrive4Kinematics(m_FL_location, m_FR_location, m_BL_location, m_BR_location)
 
+    snap_controller_PID = [0.12, 0, 0]
+    drive_controller_PID = [2, 0, 0]  # TODO Requires additional tuning. Might alter FF instead for better performance.
+    azimuth_controller_PID = [2, 0, 0]
+    drive_controller_FF = [0.22/12, 1.0/12, 0.23/12]  # TODO Requires additional tuning.
+
+    closed_loop_ramp = 0.0
+    open_loop_ramp = 0.25
+    drive_current_limit = 28
+    azimuth_current_limit = 38
+
 
 class AutoConstants:
-    kAutoTimeoutSeconds = 12
-    kAutoShootTimeSeconds = 7
     kMaxSpeedMetersPerSecond = 4.5
     kMaxAccelerationMetersPerSecondSquared = 10.0
 
@@ -56,4 +64,22 @@ class OIConstants:
 
 
 class ModuleConstants:
-    oops = 14
+    fl_drive_id = 10
+    fl_turn_id = 11
+    fl_encoder_id = 12
+    fl_zero_offset = -78.75
+
+    fr_drive_id = 13
+    fr_turn_id = 14
+    fr_encoder_id = 15
+    fr_zero_offset = -175.341797
+
+    bl_drive_id = 16
+    bl_turn_id = 17
+    bl_encoder_id = 18
+    bl_zero_offset = -293.554688
+
+    br_drive_id = 19
+    br_turn_id = 20
+    br_encoder_id = 21
+    br_zero_offset = -250.136719

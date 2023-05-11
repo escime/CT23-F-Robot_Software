@@ -1,7 +1,6 @@
 import commands2
 import commands2.button
 import commands2.cmd
-
 from constants import OIConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
@@ -24,10 +23,11 @@ class RobotContainer:
     def __init__(self) -> None:
         # Instantiate subsystems using their constructors.
         self.robot_drive = DriveSubsystem()
-        self.leds = LEDs(0, 145, 1, 0.03, "RGB")
+        self.leds = LEDs(0, 50, 1, 0.03, "GRB")
         self.vision_system = VisionSubsystem(self.robot_drive)
 
-        self.vision_system.setDefaultCommand(commands2.cmd.run(lambda: self.vision_system.periodic(), [self.vision_system]))
+        self.vision_system.setDefaultCommand(commands2.cmd.run(
+            lambda: self.vision_system.periodic(), [self.vision_system]))
         commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(True), [self.vision_system])
 
         # Setup driver & operator controllers.
@@ -37,8 +37,7 @@ class RobotContainer:
         # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()
 
-        # Here's some code to adapt the current drive command to the new CustomHID layout. Need real robot to test,
-        # so commented out for now.
+        # Set the default drive command.
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
             lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
                                            self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
@@ -58,12 +57,13 @@ class RobotContainer:
             NotifierLEDs(self.leds, "RED", self.leds.current_state))
 
         # Setup autonomous selector on the dashboard.
-        # TODO Recreate the LabVIEW structure of placing the files on the rio and parsing out. Will require new class.
         self.m_chooser = SendableChooser()
         self.m_chooser.setDefaultOption("No-op", "No-op")
-        self.m_chooser.addOption("Leave_Community", "Leave_Community")
+        self.m_chooser.addOption("Score_Collect_Score_Balance", "Score_Collect_Score_Balance")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
+        # Push an update to the limelight NT to turn off the LEDs.
+        # TODO Check if this is actually working. Last I checked, I wasn't able to push anything to NT via this.
         commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system]).schedule()
 
     def configureButtonBindings(self) -> None:
@@ -133,7 +133,7 @@ class RobotContainer:
         """Use this to pass the autonomous command to the main Robot class.
         Returns the command to run in autonomous
         """
-        if self.m_chooser.getSelected() == "Leave_Community":
-            return autoplays.path_planner_test(self.robot_drive)
+        if self.m_chooser.getSelected() == "Score_Collect_Score_Balance":
+            return autoplays.path_points_test(self.robot_drive, self.leds)
         else:
             return None

@@ -7,7 +7,7 @@ from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.controller import ProfiledPIDController, PIDController
 from subsystems.swervemodule import SwerveModule
-from constants import DriveConstants, AutoConstants
+from constants import DriveConstants, AutoConstants, ModuleConstants
 import navx
 from wpilib import SerialPort, SmartDashboard, Field2d
 from pathplannerlib import PathPlannerTrajectory
@@ -17,6 +17,7 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Creates a new DriveSubsystem
     def __init__(self) -> None:
         super().__init__()
+        # Reset odometry @ instantiation.
         self.gyro.reset()
         self.reset_encoders()
         self.m_odometry.update(self.gyro.getRotation2d(),
@@ -24,44 +25,52 @@ class DriveSubsystem(commands2.SubsystemBase):
                                self.m_FR.get_position(),
                                self.m_BL.get_position(),
                                self.m_BR.get_position()))
-        self.snap_controller = PIDController(0.12, 0, 0)
+        # Setup snap controller for class-wide use.
+        self.snap_controller = PIDController(DriveConstants.snap_controller_PID[0],
+                                             DriveConstants.snap_controller_PID[1],
+                                             DriveConstants.snap_controller_PID[2])
 
-    m_FL = SwerveModule(CANSparkMax(10, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(11, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(12),
-                        -78.75,
+    # Instantiate all swerve modules.
+    m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
+                        CANSparkMax(ModuleConstants.fl_turn_id, CANSparkMax.MotorType.kBrushless),
+                        CANCoder(ModuleConstants.fl_encoder_id),
+                        ModuleConstants.fl_zero_offset,
                         True,
                         True)
-    m_FR = SwerveModule(CANSparkMax(13, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(14, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(15),
-                        -175.341797,
+    m_FR = SwerveModule(CANSparkMax(ModuleConstants.fr_drive_id, CANSparkMax.MotorType.kBrushless),
+                        CANSparkMax(ModuleConstants.fr_turn_id, CANSparkMax.MotorType.kBrushless),
+                        CANCoder(ModuleConstants.fr_encoder_id),
+                        ModuleConstants.fr_zero_offset,
                         True,
                         True)
-    m_BL = SwerveModule(CANSparkMax(16, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(17, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(18),
-                        -293.554688,
+    m_BL = SwerveModule(CANSparkMax(ModuleConstants.bl_drive_id, CANSparkMax.MotorType.kBrushless),
+                        CANSparkMax(ModuleConstants.bl_turn_id, CANSparkMax.MotorType.kBrushless),
+                        CANCoder(ModuleConstants.bl_encoder_id),
+                        ModuleConstants.bl_zero_offset,
                         True,
                         True)
-    m_BR = SwerveModule(CANSparkMax(19, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(20, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(21),
-                        -250.136719,
+    m_BR = SwerveModule(CANSparkMax(ModuleConstants.br_drive_id, CANSparkMax.MotorType.kBrushless),
+                        CANSparkMax(ModuleConstants.br_turn_id, CANSparkMax.MotorType.kBrushless),
+                        CANCoder(ModuleConstants.br_encoder_id),
+                        ModuleConstants.br_zero_offset,
                         True,
                         True)
 
+    # Set initial value of software-tracked position. Should always be zero at startup.
     m_FL_position = m_FL.get_position()
     m_FR_position = m_FR.get_position()
     m_BL_position = m_BL.get_position()
     m_BR_position = m_BR.get_position()
 
+    # Instantiate gyro on Serial Bus. This is a NavX, planned to convert to Pigeon 2.0.
     gyro = navx.AHRS(SerialPort.Port.kUSB)
 
+    # Create pose estimator (replacement for odometry).
     m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics, gyro.getRotation2d(),
                                            (m_FL_position, m_FR_position, m_BL_position, m_BR_position),
                                            Pose2d(Translation2d(0, 0), Rotation2d(0)))
 
+    # Create Field2d object to display/track robot position.
     m_field = Field2d()
 
     def drive(self, x_speed, y_speed, rot, field_relative, teleop) -> None:
@@ -73,6 +82,7 @@ class DriveSubsystem(commands2.SubsystemBase):
                 swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
                                                                                                       y_speed, rot))
         else:
+            # TODO deprecate this terrible deadband implementation. Already fixed via CustomHID.
             if abs(x_speed) >= 0.1 or abs(y_speed) >= 0.1 or abs(rot) >= 0.1:
                 if field_relative:
                     swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
