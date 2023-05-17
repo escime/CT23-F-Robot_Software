@@ -73,30 +73,21 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Create Field2d object to display/track robot position.
     m_field = Field2d()
 
-    def drive(self, x_speed, y_speed, rot, field_relative, teleop) -> None:
-        if not teleop:
-            if field_relative:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                    ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
-            else:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
-                                                                                                      y_speed, rot))
+    def drive(self, x_speed, y_speed, rot, field_relative) -> None:
+        """The default drive command for the robot. This is the math that makes swerve drive work."""
+        # If in field relative mode, get swerve module states.
+        if field_relative:
+            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
+                ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
+        # If in robot relative mode, get swerve module states.
         else:
-            # TODO deprecate this terrible deadband implementation. Already fixed via CustomHID.
-            if abs(x_speed) >= 0.1 or abs(y_speed) >= 0.1 or abs(rot) >= 0.1:
-                if field_relative:
-                    swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                        ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
-                else:
-                    swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                        ChassisSpeeds(x_speed, y_speed, rot))
-            else:
-                swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                    ChassisSpeeds(0, 0, 0)
-                )
+            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
+                                                                                                  y_speed, rot))
 
+        # Desaturate wheel speeds step based on max robot speed.
         SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.kMaxSpeed)
 
+        # Set all swerve module state targets and update the dashboard with the targets.
         self.m_FL.set_desired_state(swerve_module_states[0])
         SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
         SmartDashboard.putNumber("FL Target Speed", swerve_module_states[0].speed)
@@ -110,10 +101,12 @@ class DriveSubsystem(commands2.SubsystemBase):
         SmartDashboard.putNumber("BR Target", swerve_module_states[3].angle.degrees())
         SmartDashboard.putNumber("BR Target Speed", swerve_module_states[3].speed)
 
-    def drive_slow(self, x_speed, y_speed, rot, field_relative, teleop, slow: float) -> None:
-        self.drive(x_speed * slow, y_speed * slow, rot * slow, field_relative, teleop)
+    def drive_slow(self, x_speed, y_speed, rot, field_relative, slow: float) -> None:
+        """Alternate drive command that reduces maximum speed by a given multiplier."""
+        self.drive(x_speed * slow, y_speed * slow, rot * slow, field_relative)
 
     def drive_lock(self) -> None:
+        """Alternate drive command that locks all swerve modules into rotation position, a 'hard' brake setting."""
         swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
             ChassisSpeeds(0, 0, 0.01))
 
@@ -125,6 +118,7 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BR.set_desired_state(swerve_module_states[3])
 
     def periodic(self):
+        """Update robot odometry, pose, and dashboard readouts."""
         self.m_odometry.update(self.gyro.getRotation2d(),
                                (self.m_FL.get_position(),
                                self.m_FR.get_position(),
@@ -145,16 +139,21 @@ class DriveSubsystem(commands2.SubsystemBase):
         SmartDashboard.putString("Current Command", str(self.getCurrentCommand()))
 
     def get_pose(self):
+        """Return pose estimator's estimated position."""
         return self.m_odometry.getEstimatedPosition()
 
     def add_vision(self, pose: Pose2d, timestamp: float):
+        """Add a vision measurement from the limelight and integrate into robot pose using a Kalman filter."""
         self.m_odometry.addVisionMeasurement(pose, timestamp)
 
     def reset_odometry(self, pose: Pose2d):
+        """Hard reset robot odometry and pose. Intended only for manual use."""
         self.m_odometry.resetPosition(self.gyro.getRotation2d(), (self.m_FL_position, self.m_FR_position,
                                       self.m_BL_position, self.m_BR_position), pose)
 
     def set_module_states(self, desired_states):
+        """Set swerve module states given a list of target states."""
+        # TODO This may be duplicate code. Investigate.
         SwerveDrive4Kinematics.desaturateWheelSpeeds(desired_states, DriveConstants.kMaxSpeed)
         self.m_FL.set_desired_state(desired_states[0])
         self.m_FR.set_desired_state(desired_states[1])
@@ -162,24 +161,29 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BR.set_desired_state(desired_states[3])
 
     def reset_encoders(self):
+        """Manually reset only the swerve module encoders."""
         self.m_FL.reset_encoders()
         self.m_FR.reset_encoders()
         self.m_BL.reset_encoders()
         self.m_BR.reset_encoders()
 
     def zero_heading(self):
+        """Reset robot absolute heading to zero."""
         self.gyro.reset()
 
     def get_heading(self):
+        """Retrieve robot heading from the IMU."""
         return self.gyro.getYaw()
 
     def get_turn_rate(self):
+        """Return current rate of robot rotation."""
         if DriveConstants.kGyroReversed:
             return self.gyro.getRate() * -1.0
         else:
             return self.gyro.getRate()
 
     def follow_trajectory(self, traj: PathPlannerTrajectory, first_path: bool) -> commands2.Swerve4ControllerCommand:
+        """Return automated command to follow a generated trajectory."""
         theta_controller = ProfiledPIDController(AutoConstants.kPThetaController, 0, 0,
                                                  AutoConstants.kThetaControllerConstraints)
         theta_controller.enableContinuousInput(-math.pi, math.pi)
@@ -206,4 +210,4 @@ class DriveSubsystem(commands2.SubsystemBase):
         if abs(current_heading - heading_target) > 180:
             heading_target = -1 * heading_target
         rotate_output = self.snap_controller.calculate(current_heading, heading_target)
-        self.drive(x_speed, y_speed, -rotate_output, True, False)
+        self.drive(x_speed, y_speed, -rotate_output, True)

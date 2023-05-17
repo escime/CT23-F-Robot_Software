@@ -41,9 +41,9 @@ class RobotContainer:
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
             lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
                                            self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
-                                           self.driver_controller_raw.get_axis("RX", 0.06) * DriveConstants.kMaxAngularSpeed,
-                                           True,
-                                           False),
+                                           self.driver_controller_raw.get_axis("RX", 0.06) *
+                                           DriveConstants.kMaxAngularSpeed,
+                                           True),
             [self.robot_drive]
         ))
 
@@ -60,11 +60,15 @@ class RobotContainer:
         self.m_chooser = SendableChooser()
         self.m_chooser.setDefaultOption("No-op", "No-op")
         self.m_chooser.addOption("Score_Collect_Score_Balance", "Score_Collect_Score_Balance")
+        self.m_chooser.addOption("Simple Path", "Simple Path")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         # Push an update to the limelight NT to turn off the LEDs.
         # TODO Check if this is actually working. Last I checked, I wasn't able to push anything to NT via this.
         commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system]).schedule()
+
+        # Create a boolean on the dashboard to reset pose without enabling. Will need separated command.
+        SmartDashboard.setDefaultBoolean("Reset Pose", False)
 
     def configureButtonBindings(self) -> None:
         """
@@ -94,7 +98,6 @@ class RobotContainer:
                 self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
                 self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
                 self.driver_controller.getRightX() * DriveConstants.kMaxAngularSpeed,
-                True,
                 True,
                 0.5), [self.robot_drive]))
 
@@ -135,5 +138,7 @@ class RobotContainer:
         """
         if self.m_chooser.getSelected() == "Score_Collect_Score_Balance":
             return autoplays.path_points_test(self.robot_drive, self.leds)
+        elif self.m_chooser.getSelected() == "Simple Path":
+            return autoplays.simple_path(self.robot_drive, self.leds)
         else:
             return None

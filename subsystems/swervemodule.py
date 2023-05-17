@@ -1,4 +1,5 @@
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
+# from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from rev import CANSparkMax
@@ -63,6 +64,10 @@ class SwerveModule:
         rm.burnFlash()
         dm.burnFlash()
 
+        # Create Slew rate limiter objects.
+        # self.drive_filter = SlewRateLimiter(5)
+        # self.turn_filter = SlewRateLimiter(5)
+
     def get_state(self):
         """Get the current SwerveModuleState object."""
         return SwerveModuleState(self.drive_encoder.getVelocity(), Rotation2d(math.radians(
@@ -88,6 +93,10 @@ class SwerveModule:
         # REV through bore encoder.
         self.driveMotor.setVoltage(drive_output + drive_ff)
         self.rotateMotor.setVoltage(rotate_output)
+
+        # Slew rate limiter code is commented out for now as it is not necessary for Saber.
+        # self.driveMotor.setVoltage(self.drive_filter.calculate(drive_output + drive_ff))
+        # self.rotateMotor.setVoltage(self.turn_filter.calculate(rotate_output))
 
     def reset_encoders(self):
         """Reset the drive encoder to its zero position. Should not be used in normal software as it results in

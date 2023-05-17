@@ -46,3 +46,17 @@ def path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialC
         ),
         path3
     )
+
+
+def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+    # Load a simple path from the pathplanner directory on the roborio.
+    path = PathPlanner.loadPath("SimplePath", 3, 10, False)
+    # Convert path into command for drive subsystem.
+    path_command = drive.follow_trajectory(path.asWPILibTrajectory(), True)
+    # Return the sequence of auto commands.
+    return commands2.SequentialCommandGroup(
+        commands2.cmd.run(leds.fire([255, 0, 0], False)),  # Set LEDs to fire mode (red)
+        path_command,  # Run drive by path command.
+        commands2.cmd.run(leds.rainbow_shift()),  # On completion, set LEDs to rainbow shift mode
+        commands2.WaitCommand(5)  # Wait 5 additional seconds in auto.
+    )

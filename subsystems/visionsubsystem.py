@@ -18,10 +18,11 @@ class VisionSubsystem(commands2.SubsystemBase):
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
-        self.robot_drive = robot_drive
+        self.robot_drive = robot_drive  # This is structurally not great but necessary for certain features.
         self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight")
 
     def toggle_leds(self, on):
+        # TODO Unclear if this is functional.
         if on:
             self.limelight_table.putNumber("ledMode", 3)
             return True
@@ -30,26 +31,28 @@ class VisionSubsystem(commands2.SubsystemBase):
             return False
 
     def update_values(self):
-        self.tv = self.limelight_table.getEntry("tv").getDouble(0)
-        self.ta = self.limelight_table.getEntry("ta").getDouble(0)
-        self.tl = self.limelight_table.getEntry("tl").getDouble(0)
-        self.json_val = self.limelight_table.getEntry("json").getString("0")
-        first_index = str(self.json_val).find("\"ts\"")
-        adjusted_json = str(self.json_val)[first_index + 5:]
-        timestamp_str = adjusted_json[:adjusted_json.find(",")]
+        """Update relevant values from LL NT to robot variables."""
+        self.tv = self.limelight_table.getEntry("tv").getDouble(0)  # Get "target acquired" boolean as a 1.0 or 0.0.
+        self.ta = self.limelight_table.getEntry("ta").getDouble(0)  # Get "target area of image" as a double.
+        self.tl = self.limelight_table.getEntry("tl").getDouble(0)  # Get pipeline latency contribution. Unused.
+        self.json_val = self.limelight_table.getEntry("json").getString("0")  # Grab the entire json pull as a string.
+        first_index = str(self.json_val).find("\"ts\"")  # Locate the first string index for timestamp.
+        adjusted_json = str(self.json_val)[first_index + 5:]  # Substring the JSON to remove everything before timestamp
+        timestamp_str = adjusted_json[:adjusted_json.find(",")]  # Substring out the timestamp.
         try:
-            self.timestamp = float(timestamp_str)
+            self.timestamp = float(timestamp_str)  # Update timestamp if JSON parse is successful.
         except ValueError:
             self.timestamp = -1
-        SmartDashboard.putString("Limelight Timestamp", str(self.timestamp))
 
     def has_targets(self):
+        """Checks if the limelight can see a target."""
         if self.tv == 1:
             return True
         else:
             return False
 
     def vision_estimate_pose(self):
+        """Acquires limelight estimated robot pose. Currently pulls wpiblue botpose only."""
         botpose = self.limelight_table.getEntry("botpose_wpiblue").getDoubleArray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
         bot_x = botpose[0]
@@ -62,21 +65,20 @@ class VisionSubsystem(commands2.SubsystemBase):
 #         return Timer.getFPGATimestamp() - wpimath.units.millisecondsToSeconds(self.tl)
 
     def reset_hard_odo(self):
+        """Reset robot odometry based on vision pose. Intended for use only during testing, since there is no auto
+        to automatically update the initial pose and the software assumes (0, 0)."""
         self.update_values()
-        # self.robot_drive.add_vision(self.vision_estimate_pose(), self.timestamp)
         self.robot_drive.reset_odometry(self.vision_estimate_pose())
 
     def periodic(self) -> None:
+        """Update vision variables and robot odometry as fast as scheduler allows."""
         self.update_values()
 
         if self.has_targets():
             current_position = self.robot_drive.get_pose()
             vision_estimate = self.vision_estimate_pose()
             SmartDashboard.putString("Vision Estimated Pose", str(vision_estimate))
-            # self.m_field.setRobotPose(vision_estimate)
-            # SmartDashboard.putData("Field", self.m_field)
 
-            # TODO Test to make sure the odometry update doesn't wildly screw up driving
             if abs(current_position.x - vision_estimate.x) < 1 and \
-                    abs(current_position.y - vision_estimate.y) < 1:
+                    abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
                 self.robot_drive.add_vision(vision_estimate, self.timestamp)
