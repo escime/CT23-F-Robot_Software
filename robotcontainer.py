@@ -28,7 +28,6 @@ class RobotContainer:
 
         self.vision_system.setDefaultCommand(commands2.cmd.run(
             lambda: self.vision_system.periodic(), [self.vision_system]))
-        commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(True), [self.vision_system])
 
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
@@ -50,11 +49,8 @@ class RobotContainer:
         # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
-        # Setup for connecting the vision system to the LED notifier system.
-        commands2.Trigger(lambda: self.vision_system.has_targets()).onTrue(
-            NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
-        commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
-            NotifierLEDs(self.leds, "RED", self.leds.current_state))
+        # Setup for all event-trigger commands.
+        self.configureTriggers()
 
         # Setup autonomous selector on the dashboard.
         self.m_chooser = SendableChooser()
@@ -62,10 +58,6 @@ class RobotContainer:
         self.m_chooser.addOption("Score_Collect_Score_Balance", "Score_Collect_Score_Balance")
         self.m_chooser.addOption("Simple Path", "Simple Path")
         SmartDashboard.putData("Auto Select", self.m_chooser)
-
-        # Push an update to the limelight NT to turn off the LEDs.
-        # TODO Check if this is actually working. Last I checked, I wasn't able to push anything to NT via this.
-        commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system]).schedule()
 
         # Create a boolean on the dashboard to reset pose without enabling. Will need separated command.
         SmartDashboard.setDefaultBoolean("Reset Pose", False)
@@ -128,7 +120,7 @@ class RobotContainer:
             ), [self.robot_drive]))
 
         # Reset robot perceived pose based on current vision data
-        commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenPressed(
+        commands2.button.Button(lambda: self.driver_controller_raw.get_button("Y")).whenHeld(
             commands2.cmd.run(lambda: self.vision_system.reset_hard_odo(), [self.vision_system])
         )
 
@@ -142,3 +134,10 @@ class RobotContainer:
             return autoplays.simple_path(self.robot_drive, self.leds)
         else:
             return None
+
+    def configureTriggers(self) -> None:
+        """Used to set up any commands that trigger when a measured event occurs."""
+        commands2.Trigger(lambda: self.vision_system.has_targets()).onTrue(
+            NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
+        commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
+            NotifierLEDs(self.leds, "RED", self.leds.current_state))

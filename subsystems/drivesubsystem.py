@@ -30,6 +30,10 @@ class DriveSubsystem(commands2.SubsystemBase):
                                              DriveConstants.snap_controller_PID[1],
                                              DriveConstants.snap_controller_PID[2])
 
+        # Setup controller for auto-balance.
+        self.balance_controller = PIDController(1, 0, 0)
+        self.balanced = True
+
     # Instantiate all swerve modules.
     m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.fl_turn_id, CANSparkMax.MotorType.kBrushless),
@@ -125,9 +129,13 @@ class DriveSubsystem(commands2.SubsystemBase):
                                self.m_BL.get_position(),
                                self.m_BR.get_position()))
         self.m_field.setRobotPose(self.get_pose())
+        if -3 < self.gyro.getAngle() < 3:
+            self.balanced = True
+        else:
+            self.balanced = False
         SmartDashboard.putData("Field", self.m_field)
         SmartDashboard.putNumber("Robot Heading", self.gyro.getRotation2d().degrees())
-        SmartDashboard.putNumber("Robot Pitch", self.gyro.getPitch())
+        SmartDashboard.putNumber("Robot Pitch", self.gyro.getAngle())
         SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())
         SmartDashboard.putNumber("FL Speed", self.m_FL.get_state().speed)
         SmartDashboard.putNumber("FR Angle", self.m_FR.get_state().angle.degrees())
@@ -137,6 +145,7 @@ class DriveSubsystem(commands2.SubsystemBase):
         SmartDashboard.putNumber("BR Angle", self.m_BR.get_state().angle.degrees())
         SmartDashboard.putNumber("BR Speed", self.m_BR.get_state().speed)
         SmartDashboard.putString("Current Command", str(self.getCurrentCommand()))
+        SmartDashboard.putBoolean("Balanced?", self.balanced)
 
     def get_pose(self):
         """Return pose estimator's estimated position."""
@@ -211,3 +220,8 @@ class DriveSubsystem(commands2.SubsystemBase):
             heading_target = -1 * heading_target
         rotate_output = self.snap_controller.calculate(current_heading, heading_target)
         self.drive(x_speed, y_speed, -rotate_output, True)
+
+    def auto_balance(self, front_back: int):
+        """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
+        balance_output = self.balance_controller.calculate(self.gyro.getAngle(), 0)
+        self.drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, 0, False)

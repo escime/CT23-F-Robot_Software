@@ -1,10 +1,8 @@
 import commands2
-import wpimath.units
 from ntcore import NetworkTableInstance
-from wpilib import DriverStation, Timer, SmartDashboard, Field2d
-from wpimath.geometry import Pose2d, Translation2d, Rotation2d, Transform2d
+from wpilib import SmartDashboard
+from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from subsystems.drivesubsystem import DriveSubsystem
-import math
 
 
 class VisionSubsystem(commands2.SubsystemBase):
@@ -14,6 +12,8 @@ class VisionSubsystem(commands2.SubsystemBase):
     tl = 0.0
     json_val = {}
     timestamp = 0
+    target_led_mode = 1
+    pip_mode = 2
     # m_field = Field2d()
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
@@ -21,13 +21,13 @@ class VisionSubsystem(commands2.SubsystemBase):
         self.robot_drive = robot_drive  # This is structurally not great but necessary for certain features.
         self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight")
 
-    def toggle_leds(self, on):
+    def toggle_leds(self, on: bool):
         # TODO Unclear if this is functional.
         if on:
-            self.limelight_table.putNumber("ledMode", 3)
+            self.limelight_table.putNumber("ledMode", 3.0)
             return True
         else:
-            self.limelight_table.putNumber("ledMode", 1)
+            self.limelight_table.putNumber("ledMode", 1.0)
             return False
 
     def update_values(self):
@@ -73,6 +73,15 @@ class VisionSubsystem(commands2.SubsystemBase):
     def periodic(self) -> None:
         """Update vision variables and robot odometry as fast as scheduler allows."""
         self.update_values()
+
+        if self.limelight_table.getNumber("ledMode", -1) != self.target_led_mode:
+            if self.target_led_mode == 1:
+                self.toggle_leds(False)
+            else:
+                self.toggle_leds(True)
+
+        if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
+            self.limelight_table.putNumber("stream", self.pip_mode)
 
         if self.has_targets():
             current_position = self.robot_drive.get_pose()

@@ -38,8 +38,9 @@ class DriveConstants:
     m_kinematics = SwerveDrive4Kinematics(m_FL_location, m_FR_location, m_BL_location, m_BR_location)
 
     snap_controller_PID = [0.12, 0, 0]
-    drive_controller_PID = [2, 0, 0]  # TODO Requires additional tuning. Might alter FF instead for better performance.
+    drive_controller_PID = [1.5, 0, 0]  # TODO Requires additional tuning. Might alter FF instead for better performance.
     azimuth_controller_PID = [2, 0, 0]
+    # drive_controller_FF = [0.22, 1, 0.23]
     drive_controller_FF = [0.22/12, 1.0/12, 0.23/12]  # TODO Requires additional tuning.
 
     closed_loop_ramp = 0.0
@@ -83,3 +84,19 @@ class ModuleConstants:
     br_turn_id = 20
     br_encoder_id = 21
     br_zero_offset = -250.136719
+
+
+class ArmConstants:
+    kP = 0
+    kMaxVelRadPerSec = 0
+    kMaxAclRadPerSecSquared = 0
+
+    masterControlID = 30
+    followerControlID = 31
+    velocityConversion = 0
+    positionConversion = 0
+
+    kS = 0
+    kG = 0
+    kV = 0
+    kA = 0
