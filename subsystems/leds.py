@@ -16,6 +16,9 @@ class LEDs(commands2.SubsystemBase):
     notifier_state = [AddressableLED.LEDData(255, 0, 0)] * notifier_length
     heat = []
     current_state = "purple_chaser"
+    flash_state = True
+    dominant_color = [255, 0, 0]
+    flash_rate = 2
 
     def __init__(self, port: int, length: int, num: int, animation_speed: float, style: str) -> None:
         super().__init__()
@@ -108,6 +111,20 @@ class LEDs(commands2.SubsystemBase):
             self.record_time = self.timer.get()
         self.set_chain_with_notifier()
         self.current_state = "rainbow_shift"
+
+    def flash_color(self, color: [], rate: int):
+        self.dominant_color = color
+        self.flash_rate = rate
+        if self.timer.get() - (1 / rate) > self.record_time and self.flash_state:
+            self.m_ledBuffer = [AddressableLED.LEDData(color[0], color[1], color[2])] * self.length
+            self.record_time = self.timer.get()
+            self.flash_state = False
+        elif self.timer.get() - (1/rate) > self.record_time and not self.flash_state:
+            self.m_ledBuffer = [AddressableLED.LEDData(color[0], color[1], color[2])] * self.length
+            self.record_time = self.timer.get()
+            self.flash_state = True
+        self.set_chain_with_notifier()
+        self.current_state = "flash_color"
 
     def purple_chaser(self):
         """Configure the LED code for a purple chaser (2023 Charged Up Default)."""

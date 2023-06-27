@@ -17,6 +17,8 @@ class NotifierLEDs(commands2.CommandBase):
             self.leds.purple_chaser()
         elif self.current == "rainbow_shift":
             self.leds.rainbow_shift()
+        elif self.current == "flash_color":
+            self.leds.flash_color(self.leds.dominant_color, self.leds.flash_rate)
         else:
             self.leds.fire([170, 0, 255], False)
 

@@ -88,15 +88,25 @@ class ModuleConstants:
 
 class ArmConstants:
     kP = 0
-    kMaxVelRadPerSec = 0
-    kMaxAclRadPerSecSquared = 0
+    kI = 0
+    kD = 0
+    kFF = 0
+    kMinOutput = 0
+    kMaxOutput = 1
+    maxVel = 0
+    maxAcc = 0
+    minVel = 0
+    allowedErr = 0
 
     masterControlID = 30
-    followerControlID = 31
     velocityConversion = 0
     positionConversion = 0
 
-    kS = 0
-    kG = 0
-    kV = 0
-    kA = 0
+
+class IntakeConstants:
+    current_limit = 20
+    motor_id = 31
+    high_front_power = 0
+    mid_front_power = 0
+    high_back_power = 0
+    mid_back_power = 0

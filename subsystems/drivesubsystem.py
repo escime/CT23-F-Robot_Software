@@ -223,5 +223,5 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
-        balance_output = self.balance_controller.calculate(self.gyro.getAngle(), 0)
+        balance_output = self.balance_controller.calculate(self.gyro.getPitch(), 0)
         self.drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, 0, False)

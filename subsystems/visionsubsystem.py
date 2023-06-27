@@ -1,8 +1,10 @@
 import commands2
 from ntcore import NetworkTableInstance
-from wpilib import SmartDashboard
+from wpilib import SmartDashboard, DriverStation
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from subsystems.drivesubsystem import DriveSubsystem
+from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
+import math
 
 
 class VisionSubsystem(commands2.SubsystemBase):
@@ -14,6 +16,7 @@ class VisionSubsystem(commands2.SubsystemBase):
     timestamp = 0
     target_led_mode = 1
     pip_mode = 2
+    target_tag = 2
     # m_field = Field2d()
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
@@ -22,7 +25,6 @@ class VisionSubsystem(commands2.SubsystemBase):
         self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight")
 
     def toggle_leds(self, on: bool):
-        # TODO Unclear if this is functional.
         if on:
             self.limelight_table.putNumber("ledMode", 3.0)
             return True
@@ -91,3 +93,40 @@ class VisionSubsystem(commands2.SubsystemBase):
             if abs(current_position.x - vision_estimate.x) < 1 and \
                     abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
                 self.robot_drive.add_vision(vision_estimate, self.timestamp)
+
+    def update_target_tag(self, target: int) -> None:
+        """Set the VisionSubsystem's target apriltag based on the red alliance equivalent tags."""
+        if DriverStation.getAlliance() == DriverStation.Alliance.kBlue:
+            if target == 1:
+                self.target_tag = 6
+            elif target == 2:
+                self.target_tag = 7
+            elif target == 3:
+                self.target_tag = 8
+            elif target == 5:
+                self.target_tag = 4
+        else:
+            self.target_tag = target
+
+    def generate_path_to_tag(self) -> Trajectory:
+        estimate_config = TrajectoryConfig(10, 3)
+        end_pose = self.robot_drive.get_pose()
+        # TODO Set all tag coordinates correctly in space.
+        if self.target_tag == 1:
+            end_pose = Pose2d(0, 0, math.pi)
+        elif self.target_tag == 2:
+            end_pose = Pose2d(0, 0, math.pi)
+        elif self.target_tag == 3:
+            end_pose = Pose2d(0, 0, math.pi)
+        elif self.target_tag == 4:
+            end_pose = Pose2d(0, 0, math.pi)
+        elif self.target_tag == 5:
+            end_pose = Pose2d(0, 0, 0)
+        elif self.target_tag == 6:
+            end_pose = Pose2d(0, 0, 0)
+        elif self.target_tag == 7:
+            end_pose = Pose2d(0, 0, 0)
+        elif self.target_tag == 8:
+            end_pose = Pose2d(0, 0, 0)
+        path = TrajectoryGenerator.generateTrajectory([self.robot_drive.get_pose(), end_pose], estimate_config)
+        return path
