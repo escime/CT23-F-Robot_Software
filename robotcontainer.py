@@ -75,8 +75,14 @@ class RobotContainer:
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
 
         # Press "B" on pilot controller to set LEDs into "Rainbow Shift" pattern
-        commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
-            commands2.cmd.run(lambda: self.leds.flash_color([0, 0, 255], 10), [self.leds]))
+        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
+        #     commands2.cmd.run(lambda: self.leds.flash_color([0, 0, 255], 10), [self.leds]))
+
+        # Toggle limelight LEDs with controller "B"
+        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
+        #     commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
+        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
+        #     commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
 
         # Press "X" on pilot controller to clear the currently running LED pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
@@ -130,9 +136,7 @@ class RobotContainer:
         """Use this to pass the autonomous command to the main Robot class.
         Returns the command to run in autonomous
         """
-        if self.m_chooser.getSelected() == "Score_Collect_Score_Balance":
-            return autoplays.path_points_test(self.robot_drive, self.leds)
-        elif self.m_chooser.getSelected() == "Simple Path":
+        if self.m_chooser.getSelected() == "Simple Path":
             return autoplays.simple_path(self.robot_drive, self.leds)
         elif self.m_chooser.getSelected() == "Test Commands":
             return autoplays.test_commands(self.robot_drive, self.leds)
@@ -143,10 +147,19 @@ class RobotContainer:
 
     def configureTriggers(self) -> None:
         """Used to set up any commands that trigger when a measured event occurs."""
-        commands2.Trigger(lambda: self.vision_system.has_targets()).onTrue(
+        # commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
+        #     NotifierLEDs(self.leds, "RED", self.leds.current_state))
+        commands2.Trigger(lambda: self.vision_system.has_targets()).toggleOnTrue(
             NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
-        commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
-            NotifierLEDs(self.leds, "RED", self.leds.current_state))
         commands2.Trigger(lambda: self.vision_system.has_targets()).whenActive(
-            commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds])
+            commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
+
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller_raw.get_axis("LY", 0.1),
+                self.driver_controller_raw.get_axis("LX", 0.1),
+                self.driver_controller_raw.dir_est_ctrl("R")
+            ))
         )

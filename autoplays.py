@@ -1,5 +1,5 @@
 from wpimath.controller import PIDController, ProfiledPIDController, \
-    ProfiledPIDControllerRadians, HolonomicDriveController
+    ProfiledPIDControllerRadians
 import math
 import commands2
 import commands2.button
@@ -9,17 +9,16 @@ from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from pathplannerlib import PathPlanner, PathPlannerTrajectory
 from commands.return_wheels import ReturnWheels
-from commands.default_leds import DefaultLEDs
 
 
-def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: DriveSubsystem) -> commands2.Swerve4ControllerCommand:
+def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: DriveSubsystem) -> \
+        commands2.Swerve4ControllerCommand:
     """Return automated command to follow a generated trajectory."""
     theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
                                                     AutoConstants.kThetaControllerConstraints, 0.02)
     theta_controller.enableContinuousInput(-math.pi, math.pi)
     if first_path:
         drive.reset_odometry(traj.getInitialHolonomicPose())
-    # swerve_controller = HolonomicDriveController(PIDController(0, 0, 0), PIDController(0, 0, 0), theta_controller)
     wpi_traj = traj.asWPILibTrajectory()
     scc = commands2.Swerve4ControllerCommand(wpi_traj,
                                              drive.get_pose,

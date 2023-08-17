@@ -1,8 +1,10 @@
 import wpilib
+import math
 
 
 class CustomHID:
     controller_type: str
+    direction = 0
 
     def __init__(self, port: int, hid: str) -> None:
         super().__init__()
@@ -158,3 +160,19 @@ class CustomHID:
 
     def get_controller(self):
         return self.controller
+
+    def dir_est_ctrl(self, stick: str):
+        """Directional estimation control. Transforms a thumbstick input into an estimated 'direction'."""
+        if stick == "R":
+            x_ax = self.get_axis("RX", 0.1)
+            y_ax = self.get_axis("RY", 0.1)
+        else:
+            x_ax = self.get_axis("LX", 0.1)
+            y_ax = self.get_axis("LY", 0.1)
+        if math.sqrt(x_ax * x_ax + y_ax * y_ax) >= 0.8:
+            self.direction = math.degrees(math.atan2(x_ax, y_ax)) - 180
+            if self.direction < -180:
+                self.direction += 360
+
+        # print("DIRECTION: " + str(self.direction))
+        return self.direction

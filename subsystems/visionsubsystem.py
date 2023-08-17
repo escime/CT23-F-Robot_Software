@@ -46,7 +46,7 @@ class VisionSubsystem(commands2.SubsystemBase):
         except ValueError:
             self.timestamp = -1
 
-    def has_targets(self):
+    def has_targets(self) -> bool:
         """Checks if the limelight can see a target."""
         if self.tv == 1:
             return True
