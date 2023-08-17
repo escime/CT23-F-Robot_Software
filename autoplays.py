@@ -1,4 +1,5 @@
-from wpimath.controller import PIDController, ProfiledPIDController
+from wpimath.controller import PIDController, ProfiledPIDController, \
+    ProfiledPIDControllerRadians, HolonomicDriveController
 import math
 import commands2
 import commands2.button
@@ -6,8 +7,30 @@ import commands2.cmd
 from constants import AutoConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
-from pathplannerlib import PathPlanner
+from pathplannerlib import PathPlanner, PathPlannerTrajectory
 from commands.return_wheels import ReturnWheels
+from commands.default_leds import DefaultLEDs
+
+
+def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: DriveSubsystem) -> commands2.Swerve4ControllerCommand:
+    """Return automated command to follow a generated trajectory."""
+    theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
+                                                    AutoConstants.kThetaControllerConstraints, 0.02)
+    theta_controller.enableContinuousInput(-math.pi, math.pi)
+    if first_path:
+        drive.reset_odometry(traj.getInitialHolonomicPose())
+    # swerve_controller = HolonomicDriveController(PIDController(0, 0, 0), PIDController(0, 0, 0), theta_controller)
+    wpi_traj = traj.asWPILibTrajectory()
+    scc = commands2.Swerve4ControllerCommand(wpi_traj,
+                                             drive.get_pose,
+                                             DriveConstants.m_kinematics,
+                                             PIDController(0, 0, 0),
+                                             PIDController(0, 0, 0),
+                                             theta_controller,
+                                             drive.set_module_states,
+                                             [drive]
+                                             )
+    return scc
 
 
 def path_planner_test(robot_drive: DriveSubsystem) -> commands2.cmd:
@@ -53,21 +76,26 @@ def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComman
     # Load a simple path from the pathplanner directory on the roboRIO.
     path = PathPlanner.loadPath("SimplePath", 3, 10, False)
     # Convert path into command for drive subsystem.
-    path_command = drive.follow_trajectory(path.asWPILibTrajectory(), True)
+    path_command = follow_trajectory(path, True, drive)
     # Return the sequence of auto commands.
     return commands2.SequentialCommandGroup(
-        commands2.cmd.run(leds.fire([255, 0, 0], False)),  # Set LEDs to fire mode (red)
-        path_command,  # Run drive by path command.
-        commands2.cmd.run(leds.rainbow_shift()),  # On completion, set LEDs to rainbow shift mode
-        commands2.WaitCommand(5)  # Wait 5 additional seconds in auto.
+        commands2.ParallelRaceGroup(
+            path_command,  # Run drive by path command.
+            commands2.cmd.run(lambda: leds.fire([255, 0, 0], False), [leds]),  # Set LEDs to fire mode (red)
+        ),
+        commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])  # On completion, set LEDs to flash
     )
 
 
 def test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     return commands2.SequentialCommandGroup(
-        commands2.cmd.runOnce(lambda: drive.set_start_position(90, 10, 10)),
-        ReturnWheels(drive),  # Set wheels to native zero position.
-        commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 4), [leds]),  # Set LEDs to flash green.
-        commands2.WaitCommand(5),  # Wait 5 seconds.
-        commands2.cmd.run(lambda: drive.drive_lock(), [drive])  # Set wheels to locked position.
+        commands2.ParallelRaceGroup(
+            commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),
+            commands2.cmd.runOnce(lambda: drive.set_start_position(90, 10, 10))
+        ),
+        commands2.ParallelRaceGroup(
+            ReturnWheels(drive),  # Set wheels to native zero position.
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 4), [leds]),  # Set LEDs to flash green.
+        ),
+        commands2.cmd.run(lambda: leds.fire([0, 255, 0], False), [leds])
     )

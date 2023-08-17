@@ -5,7 +5,7 @@ from constants import OIConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from subsystems.visionsubsystem import VisionSubsystem
-from wpilib import SmartDashboard, SendableChooser
+from wpilib import SmartDashboard, SendableChooser, DriverStation
 import autoplays
 from commands.default_leds import DefaultLEDs
 from commands.notifier_led import NotifierLEDs
@@ -32,6 +32,7 @@ class RobotContainer:
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
         self.driver_controller = self.driver_controller_raw.get_controller()  # TODO delete this please
+        DriverStation.silenceJoystickConnectionWarning(True)
 
         # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()

@@ -6,7 +6,7 @@ numerical or boolean constants. Don't use this for any other purpose!
 import math
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive4Kinematics
-from wpimath.trajectory import TrapezoidProfile
+from wpimath.trajectory import TrapezoidProfileRadians
 import wpimath.units
 
 
@@ -56,7 +56,7 @@ class AutoConstants:
     kPXController = 1
     kPYController = 1
     kPThetaController = 1
-    kThetaControllerConstraints = TrapezoidProfile.Constraints(2 * math.pi, 2 * math.pi)
+    kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(2 * math.pi, 2 * math.pi)
 
 
 class OIConstants:

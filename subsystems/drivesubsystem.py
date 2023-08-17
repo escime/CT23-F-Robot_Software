@@ -1,16 +1,14 @@
 from rev import CANSparkMax
 from ctre.sensors import CANCoder
 import commands2
-import math
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
-from wpimath.controller import ProfiledPIDController, PIDController
+from wpimath.controller import PIDController
 from subsystems.swervemodule import SwerveModule
-from constants import DriveConstants, AutoConstants, ModuleConstants
+from constants import DriveConstants, ModuleConstants
 import navx
 from wpilib import SerialPort, SmartDashboard, Field2d
-from pathplannerlib import PathPlannerTrajectory
 
 
 class DriveSubsystem(commands2.SubsystemBase):
@@ -190,25 +188,6 @@ class DriveSubsystem(commands2.SubsystemBase):
             return self.gyro.getRate() * -1.0
         else:
             return self.gyro.getRate()
-
-    def follow_trajectory(self, traj: PathPlannerTrajectory, first_path: bool) -> commands2.Swerve4ControllerCommand:
-        """Return automated command to follow a generated trajectory."""
-        theta_controller = ProfiledPIDController(AutoConstants.kPThetaController, 0, 0,
-                                                 AutoConstants.kThetaControllerConstraints)
-        theta_controller.enableContinuousInput(-math.pi, math.pi)
-        if first_path:
-            self.reset_odometry(traj.getInitialHolonomicPose())
-        swerve_controller_command = commands2.Swerve4ControllerCommand(traj,
-                                                                       self.get_pose(),
-                                                                       DriveConstants.m_kinematics,
-                                                                       PIDController(AutoConstants.kPXController, 0,
-                                                                                     0),
-                                                                       PIDController(AutoConstants.kPYController, 0,
-                                                                                     0),
-                                                                       theta_controller,
-                                                                       self.set_module_states,
-                                                                       self)
-        return swerve_controller_command
 
     def snap_drive(self, x_speed: float, y_speed: float, heading_target: float):
         """Calculate and implement the PID controller for rotating to and maintaining a target heading."""
