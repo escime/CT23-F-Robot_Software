@@ -27,8 +27,8 @@ class DriveConstants:
     d_velocity_conversion_factor = 0.0007885761
     # (1/6.746031745) * 0.319185544
     d_position_conversion_factor = 0.047314566  # L2 ratio is 6.746031745
-    kMaxSpeed = 4.5  # Set max speed in m/s
-    kMaxAngularSpeed = 10  # Set max rotation speed rot/s
+    kMaxSpeed = 10  # Set max speed in m/s 4.5
+    kMaxAngularSpeed = 20  # Set max rotation speed rot/s 10
     kGyroReversed = False
 
     m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters
@@ -110,3 +110,4 @@ class IntakeConstants:
     mid_front_power = 0
     high_back_power = 0
     mid_back_power = 0
+    armed_speed = 0

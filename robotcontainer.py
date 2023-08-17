@@ -31,7 +31,7 @@ class RobotContainer:
 
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
-        self.driver_controller = self.driver_controller_raw.get_controller()  # Retained for legacy support.
+        self.driver_controller = self.driver_controller_raw.get_controller()  # TODO delete this please
 
         # Run routine to connect controller buttons to command input into the scheduler.
         self.configureButtonBindings()
@@ -57,6 +57,7 @@ class RobotContainer:
         self.m_chooser.setDefaultOption("No-op", "No-op")
         self.m_chooser.addOption("Score_Collect_Score_Balance", "Score_Collect_Score_Balance")
         self.m_chooser.addOption("Simple Path", "Simple Path")
+        self.m_chooser.addOption("Test Commmands", "Test Commands")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         # Create a boolean on the dashboard to reset pose without enabling. Will need separated command.
@@ -74,7 +75,7 @@ class RobotContainer:
 
         # Press "B" on pilot controller to set LEDs into "Rainbow Shift" pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
-            commands2.cmd.run(lambda: self.leds.rainbow_shift(), [self.leds]))
+            commands2.cmd.run(lambda: self.leds.flash_color([0, 0, 255], 10), [self.leds]))
 
         # Press "X" on pilot controller to clear the currently running LED pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
@@ -132,6 +133,10 @@ class RobotContainer:
             return autoplays.path_points_test(self.robot_drive, self.leds)
         elif self.m_chooser.getSelected() == "Simple Path":
             return autoplays.simple_path(self.robot_drive, self.leds)
+        elif self.m_chooser.getSelected() == "Test Commands":
+            return autoplays.test_commands(self.robot_drive, self.leds)
+        elif self.m_chooser.getSelected() == "No-op":
+            return None
         else:
             return None
 
@@ -141,3 +146,6 @@ class RobotContainer:
             NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
         commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
             NotifierLEDs(self.leds, "RED", self.leds.current_state))
+        commands2.Trigger(lambda: self.vision_system.has_targets()).whenActive(
+            commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds])
+        )

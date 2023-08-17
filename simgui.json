@@ -21,5 +21,20 @@
       "/SmartDashboard/Auto Select": "String Chooser",
       "/SmartDashboard/Field": "Field2d"
     }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "Shuffleboard": {
+        ".metadata": {
+          "open": true
+        }
+      },
+      "SmartDashboard": {
+        "Auto Select": {
+          "open": true
+        },
+        "open": true
+      }
+    }
   }
 }

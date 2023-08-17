@@ -129,13 +129,13 @@ class DriveSubsystem(commands2.SubsystemBase):
                                self.m_BL.get_position(),
                                self.m_BR.get_position()))
         self.m_field.setRobotPose(self.get_pose())
-        if -3 < self.gyro.getAngle() < 3:
+        if -3 < self.gyro.getYaw() < 3:
             self.balanced = True
         else:
             self.balanced = False
         SmartDashboard.putData("Field", self.m_field)
         SmartDashboard.putNumber("Robot Heading", self.gyro.getRotation2d().degrees())
-        SmartDashboard.putNumber("Robot Pitch", self.gyro.getAngle())
+        SmartDashboard.putNumber("Robot Pitch", self.gyro.getYaw())
         SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())
         SmartDashboard.putNumber("FL Speed", self.m_FL.get_state().speed)
         SmartDashboard.putNumber("FR Angle", self.m_FR.get_state().angle.degrees())
@@ -223,5 +223,18 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
-        balance_output = self.balance_controller.calculate(self.gyro.getPitch(), 0)
-        self.drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, 0, False)
+        balance_output = self.balance_controller.calculate(self.gyro.getYaw(), 0)
+        if front_back == 1:
+            target = 0
+        else:
+            target = 180
+        self.snap_drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, target)
+
+    def return_wheels_to_zero(self) -> None:
+        """Set wheels to known forward direction for auto startup."""
+        self.drive(0.01, 0, 0, False)
+
+    def set_start_position(self, angle: int, x_pos: float, y_pos: float) -> None:
+        """Reset pose to the location an autonomous mode starts from."""
+        self.gyro.setAngleAdjustment(angle)
+        self.reset_odometry(Pose2d(x_pos, y_pos, Rotation2d.fromDegrees(angle)))

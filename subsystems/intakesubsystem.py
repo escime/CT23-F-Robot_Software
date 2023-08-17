@@ -6,6 +6,7 @@ from constants import IntakeConstants
 class IntakeSubsystem(commands2.SubsystemBase):
 
     m_intake_motor = CANSparkMax(IntakeConstants.motor_id, CANSparkMax.MotorType.kBrushless)
+    m_intake_motor.setInverted(False)
     current_state = "inactive"
     go_held = False
 
@@ -28,6 +29,7 @@ class IntakeSubsystem(commands2.SubsystemBase):
 
         if self.m_intake_motor.getOutputCurrent() > IntakeConstants.current_limit:
             self.go_held = True
+            self.armed()
 
     def get_go(self) -> bool:
         return self.go_held
@@ -41,3 +43,6 @@ class IntakeSubsystem(commands2.SubsystemBase):
             self.intake(True, IntakeConstants.high_back_power)
         else:
             self.intake(True, IntakeConstants.mid_back_power)
+
+    def armed(self) -> None:
+        self.m_intake_motor.set(IntakeConstants.armed_speed)

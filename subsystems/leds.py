@@ -119,8 +119,8 @@ class LEDs(commands2.SubsystemBase):
             self.m_ledBuffer = [AddressableLED.LEDData(color[0], color[1], color[2])] * self.length
             self.record_time = self.timer.get()
             self.flash_state = False
-        elif self.timer.get() - (1/rate) > self.record_time and not self.flash_state:
-            self.m_ledBuffer = [AddressableLED.LEDData(color[0], color[1], color[2])] * self.length
+        elif self.timer.get() - (1 / rate) > self.record_time and not self.flash_state:
+            self.m_ledBuffer = [AddressableLED.LEDData(0, 0, 0)] * self.length
             self.record_time = self.timer.get()
             self.flash_state = True
         self.set_chain_with_notifier()
