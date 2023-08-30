@@ -92,12 +92,12 @@ class LEDs(commands2.SubsystemBase):
                 self.notifier_state = [AddressableLED.LEDData(0, 255, 0)] * self.notifier_length
             elif self.style == "GRB":
                 self.notifier_state = [AddressableLED.LEDData(255, 0, 0)] * self.notifier_length
-        if state == "BLUE":
+        elif state == "BLUE":
             if self.style == "RGB":
                 self.notifier_state = [AddressableLED.LEDData(0, 0, 255)] * self.notifier_length
             elif self.style == "GRB":
                 self.notifier_state = [AddressableLED.LEDData(0, 0, 255)] * self.notifier_length
-        if state == "RED":
+        elif state == "RED":
             if self.style == "RGB":
                 self.notifier_state = [AddressableLED.LEDData(255, 0, 0)] * self.notifier_length
             elif self.style == "GRB":

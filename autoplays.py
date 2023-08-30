@@ -23,8 +23,8 @@ def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: Driv
     scc = commands2.Swerve4ControllerCommand(wpi_traj,
                                              drive.get_pose,
                                              DriveConstants.m_kinematics,
-                                             PIDController(0, 0, 0),
-                                             PIDController(0, 0, 0),
+                                             PIDController(AutoConstants.kPXController, 0, 0),
+                                             PIDController(AutoConstants.kPYController, 0, 0),
                                              theta_controller,
                                              drive.set_module_states,
                                              [drive]
@@ -73,16 +73,27 @@ def path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialC
 
 def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     # Load a simple path from the pathplanner directory on the roboRIO.
-    path = PathPlanner.loadPath("SimplePath", 3, 10, False)
+    path = PathPlanner.loadPath("SimplePath", 4, 3, False)
     # Convert path into command for drive subsystem.
     path_command = follow_trajectory(path, True, drive)
     # Return the sequence of auto commands.
     return commands2.SequentialCommandGroup(
+        # commands2.ParallelRaceGroup(
+        #     commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),  # Set LEDs to default state at startup.
+        #     commands2.cmd.runOnce(lambda: drive.set_start_position(-179, 1.87, 4.80))  # Configure odometry.
+        # ),
+        # commands2.ParallelRaceGroup(
+        #     ReturnWheels(drive),  # Set wheels to native zero position.
+        #     commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 4), [leds]),  # Set LEDs to flash red.
+        # ),
         commands2.ParallelRaceGroup(
             path_command,  # Run drive by path command.
             commands2.cmd.run(lambda: leds.fire([255, 0, 0], False), [leds]),  # Set LEDs to fire mode (red)
         ),
-        commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])  # On completion, set LEDs to flash
+        commands2.ParallelRaceGroup(
+            commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),  # On completion, set LEDs to default
+            ReturnWheels(drive)
+        )
     )
 
 
@@ -90,7 +101,7 @@ def test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComm
     return commands2.SequentialCommandGroup(
         commands2.ParallelRaceGroup(
             commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),
-            commands2.cmd.runOnce(lambda: drive.set_start_position(90, 10, 10))
+            commands2.cmd.runOnce(lambda: drive.set_start_position(-90, 4, 2))
         ),
         commands2.ParallelRaceGroup(
             ReturnWheels(drive),  # Set wheels to native zero position.

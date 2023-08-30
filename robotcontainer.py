@@ -1,14 +1,18 @@
 import commands2
 import commands2.button
 import commands2.cmd
+# import wpilib
+
 from constants import OIConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from subsystems.visionsubsystem import VisionSubsystem
+# from subsystems.utilsubsystem import UtilSubsystem
 from wpilib import SmartDashboard, SendableChooser, DriverStation
 import autoplays
 from commands.default_leds import DefaultLEDs
 from commands.notifier_led import NotifierLEDs
+from commands.debug_mode import DebugMode
 from helpers.custom_hid import CustomHID
 
 
@@ -25,6 +29,7 @@ class RobotContainer:
         self.robot_drive = DriveSubsystem()
         self.leds = LEDs(0, 50, 1, 0.03, "GRB")
         self.vision_system = VisionSubsystem(self.robot_drive)
+        # self.utilsys = UtilSubsystem()
 
         self.vision_system.setDefaultCommand(commands2.cmd.run(
             lambda: self.vision_system.periodic(), [self.vision_system]))
@@ -61,8 +66,17 @@ class RobotContainer:
         self.m_chooser.addOption("Test Commmands", "Test Commands")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
-        # Create a boolean on the dashboard to reset pose without enabling. Will need separated command.
-        SmartDashboard.setDefaultBoolean("Reset Pose", False)
+        # Create a boolean on the dashboard to reset pose without enabling.
+        SmartDashboard.putData("Reset Pose", commands2.cmd.runOnce(lambda: self.vision_system.reset_hard_odo(),
+                                                                   [self.vision_system, self.robot_drive]))
+
+        # Create a command on the dashboard to enable "Debug Mode" for the drivetrain.
+        # SmartDashboard.putData("Debug Mode On", commands2.cmd.runOnce(lambda: self.robot_drive.debug_toggle(True),
+        #                                                               [self.robot_drive]))
+        SmartDashboard.putData("Debug Mode On", DebugMode(self.robot_drive, True))
+        # SmartDashboard.putData("Debug Mode Off", commands2.cmd.runOnce(lambda: self.robot_drive.debug_toggle(False),
+        #                                                                [self.robot_drive]))
+        SmartDashboard.putData("Debug Mode Off", DebugMode(self.robot_drive, False))
 
     def configureButtonBindings(self) -> None:
         """
@@ -147,19 +161,27 @@ class RobotContainer:
 
     def configureTriggers(self) -> None:
         """Used to set up any commands that trigger when a measured event occurs."""
-        # commands2.Trigger(lambda: self.vision_system.has_targets()).onFalse(
-        #     NotifierLEDs(self.leds, "RED", self.leds.current_state))
+        commands2.Trigger(lambda: self.vision_system.has_targets()).toggleOnFalse(
+            NotifierLEDs(self.leds, "RED", self.leds.current_state))
         commands2.Trigger(lambda: self.vision_system.has_targets()).toggleOnTrue(
             NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
-        commands2.Trigger(lambda: self.vision_system.has_targets()).whenActive(
-            commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds]))
+        # commands2.Trigger(lambda: self.vision_system.has_targets()).whenActive(
+        #     commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds]))
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
             commands2.cmd.run(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
+            commands2.cmd.run(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
 
+        # commands2.Trigger(lambda: wpilib.RobotState.isTeleop()).toggleOnTrue(
+        #     commands2.cmd.run(lambda: self.utilsys.toggle_channel(True), [self.utilsys]))
+        # commands2.Trigger(lambda: wpilib.RobotState.isDisabled()).toggleOnTrue(
+        #     commands2.cmd.run(lambda: self.utilsys.toggle_channel(True), [self.utilsys]))
+
+        # TODO Fix the snapping to zero direction
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).toggleOnTrue(
             commands2.cmd.run(lambda: self.robot_drive.snap_drive(
-                self.driver_controller_raw.get_axis("LY", 0.1),
-                self.driver_controller_raw.get_axis("LX", 0.1),
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
                 self.driver_controller_raw.dir_est_ctrl("R")
             ))
         )

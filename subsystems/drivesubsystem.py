@@ -29,8 +29,11 @@ class DriveSubsystem(commands2.SubsystemBase):
                                              DriveConstants.snap_controller_PID[2])
 
         # Setup controller for auto-balance.
-        self.balance_controller = PIDController(1, 0, 0)
+        self.balance_controller = PIDController(DriveConstants.balance_PID[0],
+                                                DriveConstants.balance_PID[1],
+                                                DriveConstants.balance_PID[2])
         self.balanced = True
+        self.debug_mode = False
 
     # Instantiate all swerve modules.
     m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
@@ -79,8 +82,11 @@ class DriveSubsystem(commands2.SubsystemBase):
         """The default drive command for the robot. This is the math that makes swerve drive work."""
         # If in field relative mode, get swerve module states.
         if field_relative:
+            # swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
+            #     ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
+                ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot,
+                                                      Rotation2d.fromDegrees(self.get_heading())))
         # If in robot relative mode, get swerve module states.
         else:
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
@@ -91,17 +97,19 @@ class DriveSubsystem(commands2.SubsystemBase):
 
         # Set all swerve module state targets and update the dashboard with the targets.
         self.m_FL.set_desired_state(swerve_module_states[0])
-        SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
-        SmartDashboard.putNumber("FL Target Speed", swerve_module_states[0].speed)
         self.m_FR.set_desired_state(swerve_module_states[1])
-        SmartDashboard.putNumber("FR Target", swerve_module_states[1].angle.degrees())
-        SmartDashboard.putNumber("FR Target Speed", swerve_module_states[1].speed)
         self.m_BL.set_desired_state(swerve_module_states[2])
-        SmartDashboard.putNumber("BL Target", swerve_module_states[2].angle.degrees())
-        SmartDashboard.putNumber("BL Target Speed", swerve_module_states[2].speed)
         self.m_BR.set_desired_state(swerve_module_states[3])
-        SmartDashboard.putNumber("BR Target", swerve_module_states[3].angle.degrees())
-        SmartDashboard.putNumber("BR Target Speed", swerve_module_states[3].speed)
+
+        if self.debug_mode is True:
+            SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
+            SmartDashboard.putNumber("FL Target Speed", swerve_module_states[0].speed)
+            SmartDashboard.putNumber("FR Target", swerve_module_states[1].angle.degrees())
+            SmartDashboard.putNumber("FR Target Speed", swerve_module_states[1].speed)
+            SmartDashboard.putNumber("BL Target", swerve_module_states[2].angle.degrees())
+            SmartDashboard.putNumber("BL Target Speed", swerve_module_states[2].speed)
+            SmartDashboard.putNumber("BR Target", swerve_module_states[3].angle.degrees())
+            SmartDashboard.putNumber("BR Target Speed", swerve_module_states[3].speed)
 
     def drive_slow(self, x_speed, y_speed, rot, field_relative, slow: float) -> None:
         """Alternate drive command that reduces maximum speed by a given multiplier."""
@@ -121,29 +129,39 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def periodic(self):
         """Update robot odometry, pose, and dashboard readouts."""
-        self.m_odometry.update(self.gyro.getRotation2d(),
+        # self.m_odometry.update(self.gyro.getRotation2d(),
+        #                        (self.m_FL.get_position(),
+        #                        self.m_FR.get_position(),
+        #                        self.m_BL.get_position(),
+        #                        self.m_BR.get_position()))
+        # TODO Figure out why adding 360 to this value... works.
+        self.m_odometry.update(Rotation2d.fromDegrees(360 + self.get_heading()),
                                (self.m_FL.get_position(),
                                self.m_FR.get_position(),
-                               self.m_BL.get_position(),
-                               self.m_BR.get_position()))
+                                self.m_BL.get_position(),
+                                self.m_BR.get_position()))
         self.m_field.setRobotPose(self.get_pose())
-        if -3 < self.gyro.getYaw() < 3:
+        if -3 < self.gyro.getPitch() < 3:
             self.balanced = True
         else:
             self.balanced = False
+
         SmartDashboard.putData("Field", self.m_field)
-        SmartDashboard.putNumber("Robot Heading", self.gyro.getRotation2d().degrees())
-        SmartDashboard.putNumber("Robot Pitch", self.gyro.getYaw())
-        SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())
-        SmartDashboard.putNumber("FL Speed", self.m_FL.get_state().speed)
-        SmartDashboard.putNumber("FR Angle", self.m_FR.get_state().angle.degrees())
-        SmartDashboard.putNumber("FR Speed", self.m_FR.get_state().speed)
-        SmartDashboard.putNumber("BL Angle", self.m_BL.get_state().angle.degrees())
-        SmartDashboard.putNumber("BL Speed", self.m_BL.get_state().speed)
-        SmartDashboard.putNumber("BR Angle", self.m_BR.get_state().angle.degrees())
-        SmartDashboard.putNumber("BR Speed", self.m_BR.get_state().speed)
-        SmartDashboard.putString("Current Command", str(self.getCurrentCommand()))
+        SmartDashboard.putNumber("Robot Heading", self.get_heading())
+        SmartDashboard.putNumber("Robot Pitch", self.gyro.getRoll())
         SmartDashboard.putBoolean("Balanced?", self.balanced)
+        SmartDashboard.putString("Estimated Pose", str(self.get_pose()))
+
+        if self.debug_mode is True:
+            SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())
+            SmartDashboard.putNumber("FL Speed", self.m_FL.get_state().speed)
+            SmartDashboard.putNumber("FR Angle", self.m_FR.get_state().angle.degrees())
+            SmartDashboard.putNumber("FR Speed", self.m_FR.get_state().speed)
+            SmartDashboard.putNumber("BL Angle", self.m_BL.get_state().angle.degrees())
+            SmartDashboard.putNumber("BL Speed", self.m_BL.get_state().speed)
+            SmartDashboard.putNumber("BR Angle", self.m_BR.get_state().angle.degrees())
+            SmartDashboard.putNumber("BR Speed", self.m_BR.get_state().speed)
+            SmartDashboard.putString("Current Command", str(self.getCurrentCommand()))
 
     def get_pose(self):
         """Return pose estimator's estimated position."""
@@ -155,8 +173,11 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def reset_odometry(self, pose: Pose2d):
         """Hard reset robot odometry and pose. Intended only for manual use."""
-        self.m_odometry.resetPosition(self.gyro.getRotation2d(), (self.m_FL_position, self.m_FR_position,
-                                      self.m_BL_position, self.m_BR_position), pose)
+        self.m_odometry.resetPosition(Rotation2d.fromDegrees(360 + self.get_heading()),
+                                      (self.m_FL_position, self.m_FR_position, self.m_BL_position, self.m_BR_position),
+                                      pose)
+        # self.m_odometry.resetPosition(self.gyro.getRotation2d(), (self.m_FL_position, self.m_FR_position,
+        # self.m_BL_position, self.m_BR_position), pose)
 
     def set_module_states(self, desired_states):
         """Set swerve module states given a list of target states."""
@@ -176,11 +197,13 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def zero_heading(self):
         """Reset robot absolute heading to zero."""
+        self.gyro.setAngleAdjustment(0)
         self.gyro.reset()
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
-        return self.gyro.getYaw()
+        # return self.gyro.getYaw()
+        return -self.gyro.getAngle()
 
     def get_turn_rate(self):
         """Return current rate of robot rotation."""
@@ -191,18 +214,21 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def snap_drive(self, x_speed: float, y_speed: float, heading_target: float):
         """Calculate and implement the PID controller for rotating to and maintaining a target heading."""
-        if self.gyro.getRotation2d().degrees() >= 0:
-            current_heading = self.gyro.getRotation2d().degrees() % 360
+        if Rotation2d.fromDegrees(self.get_heading()).degrees() >= 0:
+            # current_heading = self.gyro.getRotation2d().degrees() % 360
+            current_heading = Rotation2d.fromDegrees(self.get_heading()).degrees() % 360
         else:
-            current_heading = self.gyro.getRotation2d().degrees() % -360
+            # current_heading = self.gyro.getRotation2d().degrees() % -360
+            current_heading = Rotation2d.fromDegrees(self.get_heading()).degrees() % -360
         if abs(current_heading - heading_target) > 180:
             heading_target = -1 * heading_target
         rotate_output = self.snap_controller.calculate(current_heading, heading_target)
+        # print("HEADING TARGET: " + str(heading_target))
         self.drive(x_speed, y_speed, -rotate_output, True)
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
-        balance_output = self.balance_controller.calculate(self.gyro.getYaw(), 0)
+        balance_output = self.balance_controller.calculate(self.gyro.getRoll(), 0)
         if front_back == 1:
             target = 0
         else:
@@ -217,3 +243,6 @@ class DriveSubsystem(commands2.SubsystemBase):
         """Reset pose to the location an autonomous mode starts from."""
         self.gyro.setAngleAdjustment(angle)
         self.reset_odometry(Pose2d(x_pos, y_pos, Rotation2d.fromDegrees(angle)))
+
+    def debug_toggle(self, on: bool):
+        self.debug_mode = on

@@ -76,11 +76,11 @@ class VisionSubsystem(commands2.SubsystemBase):
         """Update vision variables and robot odometry as fast as scheduler allows."""
         self.update_values()
 
-        if self.limelight_table.getNumber("ledMode", -1) != self.target_led_mode:
-            if self.target_led_mode == 1:
-                self.toggle_leds(False)
-            else:
-                self.toggle_leds(True)
+        # if self.limelight_table.getNumber("ledMode", -1) != self.target_led_mode:
+        #     if self.target_led_mode == 1:
+        #         self.toggle_leds(False)
+        #     else:
+        #         self.toggle_leds(True)
 
         if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
             self.limelight_table.putNumber("stream", self.pip_mode)
