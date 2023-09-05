@@ -78,14 +78,6 @@ def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComman
     path_command = follow_trajectory(path, True, drive)
     # Return the sequence of auto commands.
     return commands2.SequentialCommandGroup(
-        # commands2.ParallelRaceGroup(
-        #     commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),  # Set LEDs to default state at startup.
-        #     commands2.cmd.runOnce(lambda: drive.set_start_position(-179, 1.87, 4.80))  # Configure odometry.
-        # ),
-        # commands2.ParallelRaceGroup(
-        #     ReturnWheels(drive),  # Set wheels to native zero position.
-        #     commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 4), [leds]),  # Set LEDs to flash red.
-        # ),
         commands2.ParallelRaceGroup(
             path_command,  # Run drive by path command.
             commands2.cmd.run(lambda: leds.fire([255, 0, 0], False), [leds]),  # Set LEDs to fire mode (red)
@@ -101,11 +93,29 @@ def test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComm
     return commands2.SequentialCommandGroup(
         commands2.ParallelRaceGroup(
             commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),
-            commands2.cmd.runOnce(lambda: drive.set_start_position(-90, 4, 2))
+            commands2.cmd.runOnce(lambda: drive.set_start_position(90, 4, 2))
         ),
         commands2.ParallelRaceGroup(
             ReturnWheels(drive),  # Set wheels to native zero position.
             commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 4), [leds]),  # Set LEDs to flash green.
         ),
         commands2.cmd.run(lambda: leds.fire([0, 255, 0], False), [leds])
+    )
+
+
+def quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+    # Load a simple path from the pathplanner directory on the roboRIO.
+    path = PathPlanner.loadPath("QuikAuto", 4, 3, False)
+    # Convert path into command for drive subsystem.
+    path_command = follow_trajectory(path, True, drive)
+    # Return the sequence of auto commands.
+    return commands2.SequentialCommandGroup(
+        commands2.ParallelRaceGroup(
+            path_command,  # Run drive by path command.
+            commands2.cmd.run(lambda: leds.fire([255, 0, 0], False), [leds]),  # Set LEDs to fire mode (red)
+        ),
+        commands2.ParallelRaceGroup(
+            commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),  # On completion, set LEDs to default
+            ReturnWheels(drive)
+        )
     )

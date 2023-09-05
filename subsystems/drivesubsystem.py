@@ -1,7 +1,7 @@
 from rev import CANSparkMax
 from ctre.sensors import CANCoder
 import commands2
-from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
+from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.controller import PIDController
@@ -15,18 +15,34 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Creates a new DriveSubsystem
     def __init__(self) -> None:
         super().__init__()
+
+        # Create pose estimator (replacement for odometry).
+        # self.m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics,
+        #                                             Rotation2d.fromDegrees(-self.get_heading()),
+        #                                             (self.m_FL_position, self.m_FR_position, self.m_BL_position,
+        #                                              self.m_BR_position),
+        #                                             Pose2d(Translation2d(0, 0), Rotation2d(0)))
+        self.m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics,
+                                                    Rotation2d.fromDegrees(-self.get_heading()),
+                                                    (SwerveModulePosition(0, Rotation2d(0)),
+                                                     SwerveModulePosition(0, Rotation2d(0)),
+                                                     SwerveModulePosition(0, Rotation2d(0)),
+                                                     SwerveModulePosition(0, Rotation2d(0))),
+                                                    Pose2d(Translation2d(0, 0), Rotation2d(0)))
+
         # Reset odometry @ instantiation.
         self.gyro.reset()
         self.reset_encoders()
-        self.m_odometry.update(self.gyro.getRotation2d(),
-                               (self.m_FL.get_position(),
-                               self.m_FR.get_position(),
-                               self.m_BL.get_position(),
-                               self.m_BR.get_position()))
+        # self.m_odometry.update(Rotation2d.fromDegrees(-self.get_heading()),
+        #                        (self.m_FL.get_position(),
+        #                        self.m_FR.get_position(),
+        #                        self.m_BL.get_position(),
+        #                        self.m_BR.get_position()))
         # Setup snap controller for class-wide use.
         self.snap_controller = PIDController(DriveConstants.snap_controller_PID[0],
                                              DriveConstants.snap_controller_PID[1],
                                              DriveConstants.snap_controller_PID[2])
+        self.snap_controller.enableContinuousInput(-180, 180)
 
         # Setup controller for auto-balance.
         self.balance_controller = PIDController(DriveConstants.balance_PID[0],
@@ -41,27 +57,27 @@ class DriveSubsystem(commands2.SubsystemBase):
                         CANCoder(ModuleConstants.fl_encoder_id),
                         ModuleConstants.fl_zero_offset,
                         True,
-                        True)
+                        False)
     m_FR = SwerveModule(CANSparkMax(ModuleConstants.fr_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.fr_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.fr_encoder_id),
                         ModuleConstants.fr_zero_offset,
                         True,
-                        True)
+                        False)
     m_BL = SwerveModule(CANSparkMax(ModuleConstants.bl_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.bl_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.bl_encoder_id),
                         ModuleConstants.bl_zero_offset,
                         True,
-                        True)
+                        False)
     m_BR = SwerveModule(CANSparkMax(ModuleConstants.br_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.br_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.br_encoder_id),
                         ModuleConstants.br_zero_offset,
                         True,
-                        True)
+                        False)
 
-    # Set initial value of software-tracked position. Should always be zero at startup.
+    # Set initial value of software-tracked position.
     m_FL_position = m_FL.get_position()
     m_FR_position = m_FR.get_position()
     m_BL_position = m_BL.get_position()
@@ -69,11 +85,6 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     # Instantiate gyro on Serial Bus. This is a NavX, planned to convert to Pigeon 2.0.
     gyro = navx.AHRS(SerialPort.Port.kUSB)
-
-    # Create pose estimator (replacement for odometry).
-    m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics, gyro.getRotation2d(),
-                                           (m_FL_position, m_FR_position, m_BL_position, m_BR_position),
-                                           Pose2d(Translation2d(0, 0), Rotation2d(0)))
 
     # Create Field2d object to display/track robot position.
     m_field = Field2d()
@@ -86,7 +97,7 @@ class DriveSubsystem(commands2.SubsystemBase):
             #     ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
                 ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot,
-                                                      Rotation2d.fromDegrees(self.get_heading())))
+                                                      Rotation2d.fromDegrees(-self.get_heading())))
         # If in robot relative mode, get swerve module states.
         else:
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
@@ -101,7 +112,8 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.set_desired_state(swerve_module_states[2])
         self.m_BR.set_desired_state(swerve_module_states[3])
 
-        if self.debug_mode is True:
+        # if self.debug_mode is True:
+        if True:
             SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
             SmartDashboard.putNumber("FL Target Speed", swerve_module_states[0].speed)
             SmartDashboard.putNumber("FR Target", swerve_module_states[1].angle.degrees())
@@ -129,19 +141,13 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def periodic(self):
         """Update robot odometry, pose, and dashboard readouts."""
-        # self.m_odometry.update(self.gyro.getRotation2d(),
-        #                        (self.m_FL.get_position(),
-        #                        self.m_FR.get_position(),
-        #                        self.m_BL.get_position(),
-        #                        self.m_BR.get_position()))
-        # TODO Figure out why adding 360 to this value... works.
-        self.m_odometry.update(Rotation2d.fromDegrees(360 + self.get_heading()),
+        self.m_odometry.update(Rotation2d.fromDegrees(-self.get_heading()),
                                (self.m_FL.get_position(),
-                               self.m_FR.get_position(),
+                                self.m_FR.get_position(),
                                 self.m_BL.get_position(),
                                 self.m_BR.get_position()))
         self.m_field.setRobotPose(self.get_pose())
-        if -3 < self.gyro.getPitch() < 3:
+        if -5 < self.gyro.getRoll() < 5:
             self.balanced = True
         else:
             self.balanced = False
@@ -173,8 +179,17 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def reset_odometry(self, pose: Pose2d):
         """Hard reset robot odometry and pose. Intended only for manual use."""
-        self.m_odometry.resetPosition(Rotation2d.fromDegrees(360 + self.get_heading()),
-                                      (self.m_FL_position, self.m_FR_position, self.m_BL_position, self.m_BR_position),
+        self.m_FL.reset_encoders()
+        self.m_FR.reset_encoders()
+        self.m_BL.reset_encoders()
+        self.m_BR.reset_encoders()
+        self.zero_heading()
+        self.gyro.setAngleAdjustment(pose.rotation().degrees())
+        self.m_odometry.resetPosition(Rotation2d.fromDegrees(-self.get_heading()),
+                                      (SwerveModulePosition(0, self.m_FL_position.angle),
+                                       SwerveModulePosition(0, self.m_FR_position.angle),
+                                       SwerveModulePosition(0, self.m_BL_position.angle),
+                                       SwerveModulePosition(0, self.m_BR_position.angle)),
                                       pose)
         # self.m_odometry.resetPosition(self.gyro.getRotation2d(), (self.m_FL_position, self.m_FR_position,
         # self.m_BL_position, self.m_BR_position), pose)
@@ -198,12 +213,13 @@ class DriveSubsystem(commands2.SubsystemBase):
     def zero_heading(self):
         """Reset robot absolute heading to zero."""
         self.gyro.setAngleAdjustment(0)
-        self.gyro.reset()
+        # self.gyro.reset()
+        self.gyro.zeroYaw()  # ATTEMPT #1 TO FIX SWERVE NO WORKY
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
         # return self.gyro.getYaw()
-        return -self.gyro.getAngle()
+        return self.gyro.getAngle()
 
     def get_turn_rate(self):
         """Return current rate of robot rotation."""
@@ -214,26 +230,20 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def snap_drive(self, x_speed: float, y_speed: float, heading_target: float):
         """Calculate and implement the PID controller for rotating to and maintaining a target heading."""
-        if Rotation2d.fromDegrees(self.get_heading()).degrees() >= 0:
-            # current_heading = self.gyro.getRotation2d().degrees() % 360
-            current_heading = Rotation2d.fromDegrees(self.get_heading()).degrees() % 360
-        else:
-            # current_heading = self.gyro.getRotation2d().degrees() % -360
-            current_heading = Rotation2d.fromDegrees(self.get_heading()).degrees() % -360
-        if abs(current_heading - heading_target) > 180:
-            heading_target = -1 * heading_target
+        current_heading = Rotation2d.fromDegrees(self.get_heading()).degrees() % 180
+        correction = Rotation2d.fromDegrees(self.get_heading()).degrees() % 360
+        if correction > 180:
+            current_heading = current_heading - 180
         rotate_output = self.snap_controller.calculate(current_heading, heading_target)
-        # print("HEADING TARGET: " + str(heading_target))
         self.drive(x_speed, y_speed, -rotate_output, True)
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
         balance_output = self.balance_controller.calculate(self.gyro.getRoll(), 0)
-        if front_back == 1:
-            target = 0
+        if self.balanced is False:
+            self.snap_drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, 0)
         else:
-            target = 180
-        self.snap_drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, target)
+            self.drive_lock()
 
     def return_wheels_to_zero(self) -> None:
         """Set wheels to known forward direction for auto startup."""

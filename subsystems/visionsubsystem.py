@@ -69,12 +69,12 @@ class VisionSubsystem(commands2.SubsystemBase):
     def reset_hard_odo(self):
         """Reset robot odometry based on vision pose. Intended for use only during testing, since there is no auto
         to automatically update the initial pose and the software assumes (0, 0)."""
-        self.update_values()
-        self.robot_drive.reset_odometry(self.vision_estimate_pose())
+        # self.robot_drive.reset_odometry(self.vision_estimate_pose())
+        self.robot_drive.reset_odometry(Pose2d(Translation2d(8.12, 4), Rotation2d(0)))
 
     def periodic(self) -> None:
         """Update vision variables and robot odometry as fast as scheduler allows."""
-        self.update_values()
+        # self.update_values()
 
         # if self.limelight_table.getNumber("ledMode", -1) != self.target_led_mode:
         #     if self.target_led_mode == 1:
@@ -82,17 +82,17 @@ class VisionSubsystem(commands2.SubsystemBase):
         #     else:
         #         self.toggle_leds(True)
 
-        if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
-            self.limelight_table.putNumber("stream", self.pip_mode)
+        # if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
+        #     self.limelight_table.putNumber("stream", self.pip_mode)
 
-        if self.has_targets():
-            current_position = self.robot_drive.get_pose()
-            vision_estimate = self.vision_estimate_pose()
-            SmartDashboard.putString("Vision Estimated Pose", str(vision_estimate))
+        # if self.has_targets():
+            # current_position = self.robot_drive.get_pose()
+            # vision_estimate = self.vision_estimate_pose()
+            # SmartDashboard.putString("Vision Estimated Pose", str(vision_estimate))
 
-            if abs(current_position.x - vision_estimate.x) < 1 and \
-                    abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
-                self.robot_drive.add_vision(vision_estimate, self.timestamp)
+            # if abs(current_position.x - vision_estimate.x) < 1 and \
+            #         abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
+            #     self.robot_drive.add_vision(vision_estimate, self.timestamp)
 
     def update_target_tag(self, target: int) -> None:
         """Set the VisionSubsystem's target apriltag based on the red alliance equivalent tags."""

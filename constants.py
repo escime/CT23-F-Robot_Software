@@ -27,8 +27,8 @@ class DriveConstants:
     d_velocity_conversion_factor = 0.0007885761
     # (1/6.746031745) * 0.319185544
     d_position_conversion_factor = 0.047314566  # L2 ratio is 6.746031745
-    kMaxSpeed = 10  # Set max speed in m/s 10
-    kMaxAngularSpeed = 20  # Set max rotation speed rot/s 20
+    kMaxSpeed = -10  # Set max speed in m/s 10
+    kMaxAngularSpeed = -20  # Set max rotation speed rot/s 20
     kGyroReversed = False
 
     m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters
@@ -51,16 +51,16 @@ class DriveConstants:
     drive_current_limit = 28
     azimuth_current_limit = 38
 
-    balance_PID = [1, 0, 0]
+    balance_PID = [0.01, 0, 0]
 
 
 class AutoConstants:
-    kMaxSpeedMetersPerSecond = 4.0
-    kMaxAccelerationMetersPerSecondSquared = 3.0
+    kMaxSpeedMetersPerSecond = 2.0
+    kMaxAccelerationMetersPerSecondSquared = 2.0
 
-    kPXController = 1
-    kPYController = 1
-    kPThetaController = 3
+    kPXController = 10
+    kPYController = 10
+    kPThetaController = 10
     # kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(2 * math.pi, 2 * math.pi)
     kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(kMaxSpeedMetersPerSecond,
                                                                       kMaxAccelerationMetersPerSecondSquared)

@@ -64,6 +64,7 @@ class RobotContainer:
         self.m_chooser.addOption("Score_Collect_Score_Balance", "Score_Collect_Score_Balance")
         self.m_chooser.addOption("Simple Path", "Simple Path")
         self.m_chooser.addOption("Test Commmands", "Test Commands")
+        self.m_chooser.addOption("QuikAuto", "QuikAuto")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         # Create a boolean on the dashboard to reset pose without enabling.
@@ -88,16 +89,6 @@ class RobotContainer:
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("A")).whenPressed(
             commands2.cmd.runOnce(lambda: self.robot_drive.zero_heading(), [self.robot_drive]))
 
-        # Press "B" on pilot controller to set LEDs into "Rainbow Shift" pattern
-        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).whenPressed(
-        #     commands2.cmd.run(lambda: self.leds.flash_color([0, 0, 255], 10), [self.leds]))
-
-        # Toggle limelight LEDs with controller "B"
-        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
-        #     commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
-        # commands2.button.Button(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
-        #     commands2.cmd.runOnce(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
-
         # Press "X" on pilot controller to clear the currently running LED pattern
         commands2.button.Button(lambda: self.driver_controller_raw.get_button("X")).whenPressed(
             commands2.cmd.runOnce(lambda: self.leds.clear_pattern, [self.leds]))
@@ -120,8 +111,8 @@ class RobotContainer:
             commands2.cmd.run(lambda: self.robot_drive.snap_drive(
                 self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
                 self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
-                90
-                ), [self.robot_drive]))
+                -90,
+            ), [self.robot_drive]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("N")).toggleOnTrue(
             commands2.cmd.run(lambda: self.robot_drive.snap_drive(
                 self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
@@ -132,7 +123,7 @@ class RobotContainer:
             commands2.cmd.run(lambda: self.robot_drive.snap_drive(
                 self.driver_controller.getLeftY() * DriveConstants.kMaxSpeed,
                 self.driver_controller.getLeftX() * DriveConstants.kMaxSpeed,
-                -90
+                90
             ), [self.robot_drive]))
         commands2.button.Button(lambda: self.driver_controller_raw.get_d_pad_pull("S")).toggleOnTrue(
             commands2.cmd.run(lambda: self.robot_drive.snap_drive(
@@ -156,6 +147,8 @@ class RobotContainer:
             return autoplays.test_commands(self.robot_drive, self.leds)
         elif self.m_chooser.getSelected() == "No-op":
             return None
+        elif self.m_chooser.getSelected() == "QuikAuto":
+            return autoplays.quik_auto(self.robot_drive, self.leds)
         else:
             return None
 
@@ -172,6 +165,8 @@ class RobotContainer:
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
             commands2.cmd.run(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
 
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("VIEW")).whileTrue(
+            commands2.cmd.run(lambda: self.robot_drive.auto_balance(-1), [self.robot_drive]))
         # commands2.Trigger(lambda: wpilib.RobotState.isTeleop()).toggleOnTrue(
         #     commands2.cmd.run(lambda: self.utilsys.toggle_channel(True), [self.utilsys]))
         # commands2.Trigger(lambda: wpilib.RobotState.isDisabled()).toggleOnTrue(
