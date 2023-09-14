@@ -7,8 +7,14 @@ import commands2.cmd
 from constants import AutoConstants, DriveConstants
 from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
+from subsystems.armsubsystem import ArmSubsystem
+from subsystems.intakesubsystem import IntakeSubsystem
 from pathplannerlib import PathPlanner, PathPlannerTrajectory
 from commands.return_wheels import ReturnWheels
+from commands.set_arm import SetArm
+from commands.shoot import Shoot
+from commands.intake import Intake
+from wpilib import DriverStation
 
 
 def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: DriveSubsystem) -> \
@@ -118,4 +124,51 @@ def quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandG
             commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),  # On completion, set LEDs to default
             ReturnWheels(drive)
         )
+    )
+
+
+def s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
+                intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
+    if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+        invert = True
+    else:
+        invert = False
+    path1 = PathPlanner.loadPath("6B-A", 4, 3, invert)
+    path2 = PathPlanner.loadPath("A-B", 4, 3, invert)
+    path3 = PathPlanner.loadPath("B-CSB", 4, 3, invert)
+    path_command_1 = follow_trajectory(path1, True, drive)
+    path_command_2 = follow_trajectory(path2, False, drive)
+    path_command_3 = follow_trajectory(path3, False, drive)
+    return commands2.SequentialCommandGroup(
+        SetArm(arm, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        Shoot(intake, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        SetArm(arm, "intake"),
+        Intake(intake, False, 1),
+        commands2.ParallelRaceGroup(
+            path_command_1,
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2))
+        ),
+        SetArm(arm, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        Shoot(intake, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        SetArm(arm, "intake"),
+        Intake(intake, False, 1),
+        commands2.ParallelRaceGroup(
+            path_command_2,
+            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2))
+        ),
+        SetArm(arm, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        Shoot(intake, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        SetArm(arm, "stow"),
+        Intake(intake, False, 0),
+        commands2.ParallelRaceGroup(
+            path_command_3,
+            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2))
+        ),
+        commands2.cmd.run(lambda: drive.auto_balance(-1))
     )

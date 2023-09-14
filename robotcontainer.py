@@ -8,6 +8,8 @@ from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.leds import LEDs
 from subsystems.visionsubsystem import VisionSubsystem
 # from subsystems.utilsubsystem import UtilSubsystem
+from subsystems.intakesubsystem import IntakeSubsystem
+from subsystems.armsubsystem import ArmSubsystem
 from wpilib import SmartDashboard, SendableChooser, DriverStation
 import autoplays
 from commands.default_leds import DefaultLEDs
@@ -30,12 +32,15 @@ class RobotContainer:
         self.leds = LEDs(0, 50, 1, 0.03, "GRB")
         self.vision_system = VisionSubsystem(self.robot_drive)
         # self.utilsys = UtilSubsystem()
+        self.arm = ArmSubsystem()
+        self.intake = IntakeSubsystem()
 
         self.vision_system.setDefaultCommand(commands2.cmd.run(
             lambda: self.vision_system.periodic(), [self.vision_system]))
 
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
+        self.operator_controller_raw = CustomHID(OIConstants.kOperatorControllerPort, "xbox")
         self.driver_controller = self.driver_controller_raw.get_controller()  # TODO delete this please
         DriverStation.silenceJoystickConnectionWarning(True)
 
@@ -55,6 +60,9 @@ class RobotContainer:
         # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
+        # Set default arm command.
+        self.arm.setDefaultCommand(commands2.cmd.run(lambda: self.arm.set_setpoint("stow"), [self.arm]))
+
         # Setup for all event-trigger commands.
         self.configureTriggers()
 
@@ -65,6 +73,7 @@ class RobotContainer:
         self.m_chooser.addOption("Simple Path", "Simple Path")
         self.m_chooser.addOption("Test Commmands", "Test Commands")
         self.m_chooser.addOption("QuikAuto", "QuikAuto")
+        self.m_chooser.addOption("s_c_s_c_b_s", "s_c_s_c_b_s")
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         # Create a boolean on the dashboard to reset pose without enabling.
@@ -149,6 +158,8 @@ class RobotContainer:
             return None
         elif self.m_chooser.getSelected() == "QuikAuto":
             return autoplays.quik_auto(self.robot_drive, self.leds)
+        elif self.m_chooser.getSelected() == "s_c_s_c_b_s":
+            return autoplays.s_c_s_c_b_s(self.robot_drive, self.leds, self.arm, self.intake)
         else:
             return None
 
@@ -158,15 +169,29 @@ class RobotContainer:
             NotifierLEDs(self.leds, "RED", self.leds.current_state))
         commands2.Trigger(lambda: self.vision_system.has_targets()).toggleOnTrue(
             NotifierLEDs(self.leds, "GREEN", self.leds.current_state))
-        # commands2.Trigger(lambda: self.vision_system.has_targets()).whenActive(
-        #     commands2.cmd.run(lambda: self.leds.flash_color([0, 255, 0], 2), [self.leds]))
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
             commands2.cmd.run(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
             commands2.cmd.run(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
 
+        # When VIEW is pressed on driver controller, enable auto balancing.
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("VIEW")).whileTrue(
             commands2.cmd.run(lambda: self.robot_drive.auto_balance(-1), [self.robot_drive]))
+
+        # When RT is pressed, put the arm and intake to their setpoints for intaking.
+        commands2.Trigger(lambda: self.operator_controller_raw.get_trigger("R", 0.3)).whileTrue(
+            commands2.ParallelCommandGroup(
+                commands2.cmd.run(lambda: self.arm.set_setpoint("intake"), [self.arm]),
+                commands2.cmd.run(lambda: self.intake.intake(False, 1), [self.intake])
+            )
+        )
+        # When LT is pressed, the intake spits out anything it has in it without moving the arm
+        commands2.Trigger(lambda: self.operator_controller_raw.get_trigger("L", 0.3)).whileTrue(
+            commands2.cmd.run(lambda: self.intake.intake(True, 1), [self.intake]))
+
+        # When up on the D-pad is pressed, put the arm into high back position
+        commands2.Trigger(lambda: self.operator_controller_raw.get_d_pad_pull("N")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.arm.set_setpoint("shoot_high_back"), [self.arm]))
         # commands2.Trigger(lambda: wpilib.RobotState.isTeleop()).toggleOnTrue(
         #     commands2.cmd.run(lambda: self.utilsys.toggle_channel(True), [self.utilsys]))
         # commands2.Trigger(lambda: wpilib.RobotState.isDisabled()).toggleOnTrue(

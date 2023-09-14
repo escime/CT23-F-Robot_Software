@@ -4,11 +4,13 @@ import commands2
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
-from wpimath.controller import PIDController
+from wpimath.controller import PIDController, ProfiledPIDControllerRadians
+from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig
 from subsystems.swervemodule import SwerveModule
-from constants import DriveConstants, ModuleConstants
+from constants import DriveConstants, ModuleConstants, AutoConstants
 import navx
 from wpilib import SerialPort, SmartDashboard, Field2d
+import math
 
 
 class DriveSubsystem(commands2.SubsystemBase):
@@ -213,12 +215,10 @@ class DriveSubsystem(commands2.SubsystemBase):
     def zero_heading(self):
         """Reset robot absolute heading to zero."""
         self.gyro.setAngleAdjustment(0)
-        # self.gyro.reset()
-        self.gyro.zeroYaw()  # ATTEMPT #1 TO FIX SWERVE NO WORKY
+        self.gyro.zeroYaw()
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
-        # return self.gyro.getYaw()
         return self.gyro.getAngle()
 
     def get_turn_rate(self):
@@ -251,8 +251,25 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def set_start_position(self, angle: int, x_pos: float, y_pos: float) -> None:
         """Reset pose to the location an autonomous mode starts from."""
-        self.gyro.setAngleAdjustment(angle)
         self.reset_odometry(Pose2d(x_pos, y_pos, Rotation2d.fromDegrees(angle)))
 
     def debug_toggle(self, on: bool):
         self.debug_mode = on
+
+    def follow_trajectory_teleop(self, target: Pose2d):
+        theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
+                                                        AutoConstants.kThetaControllerConstraints, 0.02)
+        theta_controller.enableContinuousInput(-math.pi, math.pi)
+        traj = TrajectoryGenerator.generateTrajectory(self.get_pose(), [], target,
+                                                      TrajectoryConfig(AutoConstants.kMaxSpeedMetersPerSecond,
+                                                                       AutoConstants.kMaxAccelerationMetersPerSecondSquared))
+        scc = commands2.Swerve4ControllerCommand(traj,
+                                                 self.get_pose,
+                                                 DriveConstants.m_kinematics,
+                                                 PIDController(AutoConstants.kPXController, 0, 0),
+                                                 PIDController(AutoConstants.kPYController, 0, 0),
+                                                 theta_controller,
+                                                 self.set_module_states,
+                                                 self)
+
+        return scc

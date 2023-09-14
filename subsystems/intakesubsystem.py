@@ -29,7 +29,8 @@ class IntakeSubsystem(commands2.SubsystemBase):
 
         if self.m_intake_motor.getOutputCurrent() > IntakeConstants.current_limit:
             self.go_held = True
-            self.armed()
+            self.current_state = "armed"
+            self.arm()
 
     def get_go(self) -> bool:
         return self.go_held
@@ -44,5 +45,5 @@ class IntakeSubsystem(commands2.SubsystemBase):
         else:
             self.intake(True, IntakeConstants.mid_back_power)
 
-    def armed(self) -> None:
+    def arm(self) -> None:
         self.m_intake_motor.set(IntakeConstants.armed_speed)

@@ -31,18 +31,23 @@ class DriveConstants:
     kMaxAngularSpeed = -20  # Set max rotation speed rot/s 20
     kGyroReversed = False
 
-    m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters
-    m_FR_location = Translation2d(0.289, -0.289)
-    m_BL_location = Translation2d(-0.289, 0.289)
-    m_BR_location = Translation2d(-0.289, -0.289)
+    # Kinematics for ProtoToot'r
+    # m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters
+    # m_FR_location = Translation2d(0.289, -0.289)
+    # m_BL_location = Translation2d(-0.289, 0.289)
+    # m_BR_location = Translation2d(-0.289, -0.289)
+    m_FL_location = Translation2d(0.244, 0.244)
+    m_FR_location = Translation2d(0.244, -0.244)
+    m_BL_location = Translation2d(-0.244, 0.244)
+    m_BR_location = Translation2d(-0.244, -0.244)
     m_kinematics = SwerveDrive4Kinematics(m_FL_location, m_FR_location, m_BL_location, m_BR_location)
 
     snap_controller_PID = [0.12, 0, 0]
-    drive_controller_PID = [1.5, 0, 0]  # TODO Requires additional tuning. Might alter FF instead for better performance.
+    drive_controller_PID = [1.5, 0, 0]
     azimuth_controller_PID = [2, 0, 0]
-    drive_controller_FF = [0.22/12, 1.0/12, 0.23/12]  # TODO Requires additional tuning.
+    drive_controller_FF = [0.22/12, 1.0/12, 0.23/12]
 
-    # Here are the sysID constants :)
+    # Here are the sysID constants :) They felt less snappy to me so they just live here now
     # drive_controller_PID = [0.32069, 0, 0]
     # drive_controller_FF = [0.10338, 2.6387, 0.17711]
 
@@ -55,13 +60,12 @@ class DriveConstants:
 
 
 class AutoConstants:
-    kMaxSpeedMetersPerSecond = 2.0
-    kMaxAccelerationMetersPerSecondSquared = 2.0
+    kMaxSpeedMetersPerSecond = 4.0
+    kMaxAccelerationMetersPerSecondSquared = 3.0
 
     kPXController = 10
     kPYController = 10
     kPThetaController = 10
-    # kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(2 * math.pi, 2 * math.pi)
     kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(kMaxSpeedMetersPerSecond,
                                                                       kMaxAccelerationMetersPerSecondSquared)
 
@@ -75,22 +79,26 @@ class ModuleConstants:
     fl_drive_id = 10
     fl_turn_id = 11
     fl_encoder_id = 12
-    fl_zero_offset = -78.75
+    # fl_zero_offset = -78.75  # ProtoToot'r
+    fl_zero_offset = 0
 
     fr_drive_id = 13
     fr_turn_id = 14
     fr_encoder_id = 15
-    fr_zero_offset = -175.341797
+    # fr_zero_offset = -175.341797  # ProtoToot'r
+    fr_zero_offset = 0
 
     bl_drive_id = 16
     bl_turn_id = 17
     bl_encoder_id = 18
-    bl_zero_offset = -293.554688
+    # bl_zero_offset = -293.554688  # ProtoToot'r
+    bl_zero_offset = 0
 
     br_drive_id = 19
     br_turn_id = 20
     br_encoder_id = 21
-    br_zero_offset = -250.136719
+    # br_zero_offset = -250.136719  # ProtoToot'r
+    br_zero_offset = 0
 
 
 class ArmConstants:

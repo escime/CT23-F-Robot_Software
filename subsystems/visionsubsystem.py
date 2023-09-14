@@ -17,7 +17,6 @@ class VisionSubsystem(commands2.SubsystemBase):
     target_led_mode = 1
     pip_mode = 2
     target_tag = 2
-    # m_field = Field2d()
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
@@ -54,7 +53,7 @@ class VisionSubsystem(commands2.SubsystemBase):
             return False
 
     def vision_estimate_pose(self):
-        """Acquires limelight estimated robot pose. Currently pulls wpiblue botpose only."""
+        """Acquires limelight estimated robot pose. Currently, pulls wpiblue botpose only."""
         botpose = self.limelight_table.getEntry("botpose_wpiblue").getDoubleArray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
         bot_x = botpose[0]
@@ -75,12 +74,6 @@ class VisionSubsystem(commands2.SubsystemBase):
     def periodic(self) -> None:
         """Update vision variables and robot odometry as fast as scheduler allows."""
         # self.update_values()
-
-        # if self.limelight_table.getNumber("ledMode", -1) != self.target_led_mode:
-        #     if self.target_led_mode == 1:
-        #         self.toggle_leds(False)
-        #     else:
-        #         self.toggle_leds(True)
 
         # if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
         #     self.limelight_table.putNumber("stream", self.pip_mode)
@@ -109,24 +102,23 @@ class VisionSubsystem(commands2.SubsystemBase):
             self.target_tag = target
 
     def generate_path_to_tag(self) -> Trajectory:
-        estimate_config = TrajectoryConfig(10, 3)
+        estimate_config = TrajectoryConfig(4, 3)
         end_pose = self.robot_drive.get_pose()
-        # TODO Set all tag coordinates correctly in space.
         if self.target_tag == 1:
-            end_pose = Pose2d(0, 0, math.pi)
+            end_pose = Pose2d(14.67, 0.94, math.pi)
         elif self.target_tag == 2:
-            end_pose = Pose2d(0, 0, math.pi)
+            end_pose = Pose2d(14.67, 2.62, math.pi)
         elif self.target_tag == 3:
-            end_pose = Pose2d(0, 0, math.pi)
+            end_pose = Pose2d(14.67, 4.24, math.pi)
         elif self.target_tag == 4:
-            end_pose = Pose2d(0, 0, math.pi)
+            end_pose = Pose2d(15.64, 6.68, math.pi)
         elif self.target_tag == 5:
-            end_pose = Pose2d(0, 0, 0)
+            end_pose = Pose2d(0.69, 6.68, 180)
         elif self.target_tag == 6:
-            end_pose = Pose2d(0, 0, 0)
+            end_pose = Pose2d(1.68, 4.24, 180)
         elif self.target_tag == 7:
-            end_pose = Pose2d(0, 0, 0)
+            end_pose = Pose2d(1.68, 2.62, 180)
         elif self.target_tag == 8:
-            end_pose = Pose2d(0, 0, 0)
+            end_pose = Pose2d(1.68, 0.94, 180)
         path = TrajectoryGenerator.generateTrajectory([self.robot_drive.get_pose(), end_pose], estimate_config)
         return path
