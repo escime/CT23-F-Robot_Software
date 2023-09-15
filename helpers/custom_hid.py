@@ -169,7 +169,7 @@ class CustomHID:
         else:
             x_ax = self.get_axis("LX", 0.1)
             y_ax = self.get_axis("LY", 0.1)
-        if math.sqrt(x_ax * x_ax + y_ax * y_ax) >= 0.9:
+        if math.sqrt(x_ax * x_ax + y_ax * y_ax) >= 0.99:
             self.direction = math.degrees(math.atan2(x_ax, y_ax)) - 180
             if self.direction < -180:
                 self.direction += 360

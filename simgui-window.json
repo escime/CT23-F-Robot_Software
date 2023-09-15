@@ -10,8 +10,8 @@
       "style": "0",
       "userScale": "2",
       "width": "1824",
-      "xpos": "-72",
-      "ypos": "197"
+      "xpos": "52",
+      "ypos": "150"
     }
   },
   "Table": {
@@ -41,7 +41,7 @@
     "###Joysticks": {
       "Collapsed": "0",
       "Pos": "247,346",
-      "Size": "976,82"
+      "Size": "976,278"
     },
     "###NetworkTables": {
       "Collapsed": "0",

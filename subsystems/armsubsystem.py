@@ -37,12 +37,15 @@ class ArmSubsystem(commands2.SubsystemBase):
         self.m_arm_motor.burnFlash()
 
     def set_position(self, setpoint) -> None:
+        """Set target position of the arm."""
         self.pid.setReference(setpoint, CANSparkMax.ControlType.kSmartMotion, 1, 0)
 
     def get_position(self) -> float:
+        """Get the arm's current position."""
         return self.encoder.getPosition()
 
     def check_completion(self) -> bool:
+        """Check if the arm is at its target position."""
         if abs(self.get_position()) - self.threshold < abs(self.setpoints[self.current_setpoint]) < \
                 abs(self.get_position()) + self.threshold:
             return True
@@ -50,6 +53,7 @@ class ArmSubsystem(commands2.SubsystemBase):
             return False
 
     def set_setpoint(self, setpoint: str) -> None:
+        """Set the setpoint for the arm."""
         invalid = False
         if setpoint == "stow":
             self.set_position(self.setpoints["stow"])
@@ -70,7 +74,9 @@ class ArmSubsystem(commands2.SubsystemBase):
             self.current_setpoint = setpoint
 
     def get_setpoint(self) -> str:
+        """Get what the arm's current setpoint is."""
         return self.current_setpoint
 
     def periodic(self) -> None:
+        """Update the dashboard with the arm's current location."""
         SmartDashboard.putNumber("Arm Position", self.get_position())

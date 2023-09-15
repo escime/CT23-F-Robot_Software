@@ -38,7 +38,7 @@ def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: Driv
     return scc
 
 
-def path_planner_test(robot_drive: DriveSubsystem) -> commands2.cmd:
+def AUTO_path_planner_test(robot_drive: DriveSubsystem) -> commands2.cmd:
     test_path = PathPlanner.loadPath("Test Path", 3, 4, False)
     theta_controller = ProfiledPIDController(AutoConstants.kPThetaController, 0, 0,
                                              AutoConstants.kThetaControllerConstraints)
@@ -57,7 +57,7 @@ def path_planner_test(robot_drive: DriveSubsystem) -> commands2.cmd:
     return swerve_controller_command
 
 
-def path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+def AUTO_path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     path_group = PathPlanner.loadPathGroup("Path1", 3, 4, False)
     path_group[0] = path_group[0].asWPILibTrajectory()
     path_group[1] = path_group[1].asWPILibTrajectory()
@@ -77,7 +77,7 @@ def path_points_test(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialC
     )
 
 
-def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+def AUTO_simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     # Load a simple path from the pathplanner directory on the roboRIO.
     path = PathPlanner.loadPath("SimplePath", 4, 3, False)
     # Convert path into command for drive subsystem.
@@ -95,7 +95,7 @@ def simple_path(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComman
     )
 
 
-def test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+def AUTO_test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     return commands2.SequentialCommandGroup(
         commands2.ParallelRaceGroup(
             commands2.cmd.run(lambda: leds.purple_chaser(), [leds]),
@@ -109,7 +109,7 @@ def test_commands(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialComm
     )
 
 
-def quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
+def AUTO_quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandGroup:
     # Load a simple path from the pathplanner directory on the roboRIO.
     path = PathPlanner.loadPath("QuikAuto", 4, 3, False)
     # Convert path into command for drive subsystem.
@@ -127,7 +127,7 @@ def quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCommandG
     )
 
 
-def s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
+def AUTO_s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
                 intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
         invert = True
@@ -148,7 +148,7 @@ def s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
         Intake(intake, False, 1),
         commands2.ParallelRaceGroup(
             path_command_1,
-            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2))
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
         ),
         SetArm(arm, "shoot_high_back"),
         commands2.WaitCommand(0.25),
@@ -158,7 +158,7 @@ def s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
         Intake(intake, False, 1),
         commands2.ParallelRaceGroup(
             path_command_2,
-            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2))
+            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds])
         ),
         SetArm(arm, "shoot_high_back"),
         commands2.WaitCommand(0.25),
@@ -168,7 +168,10 @@ def s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
         Intake(intake, False, 0),
         commands2.ParallelRaceGroup(
             path_command_3,
-            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2))
+            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
         ),
-        commands2.cmd.run(lambda: drive.auto_balance(-1))
+        commands2.ParallelRaceGroup(
+            commands2.cmd.run(lambda: leds.rainbow_shift(), [leds]),
+            commands2.cmd.run(lambda: drive.auto_balance(-1))
+        )
     )
