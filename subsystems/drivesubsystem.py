@@ -59,25 +59,25 @@ class DriveSubsystem(commands2.SubsystemBase):
                         CANCoder(ModuleConstants.fl_encoder_id),
                         ModuleConstants.fl_zero_offset,
                         True,
-                        False)
+                        True)
     m_FR = SwerveModule(CANSparkMax(ModuleConstants.fr_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.fr_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.fr_encoder_id),
                         ModuleConstants.fr_zero_offset,
                         True,
-                        False)
+                        True)
     m_BL = SwerveModule(CANSparkMax(ModuleConstants.bl_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.bl_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.bl_encoder_id),
                         ModuleConstants.bl_zero_offset,
                         True,
-                        False)
+                        True)
     m_BR = SwerveModule(CANSparkMax(ModuleConstants.br_drive_id, CANSparkMax.MotorType.kBrushless),
                         CANSparkMax(ModuleConstants.br_turn_id, CANSparkMax.MotorType.kBrushless),
                         CANCoder(ModuleConstants.br_encoder_id),
                         ModuleConstants.br_zero_offset,
                         True,
-                        False)
+                        True)
 
     # Set initial value of software-tracked position.
     m_FL_position = m_FL.get_position()
@@ -98,12 +98,12 @@ class DriveSubsystem(commands2.SubsystemBase):
             # swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
             #     ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-                ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot,
+                ChassisSpeeds.fromFieldRelativeSpeeds(-x_speed, -y_speed, -rot,
                                                       Rotation2d.fromDegrees(-self.get_heading())))
         # If in robot relative mode, get swerve module states.
         else:
-            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(x_speed,
-                                                                                                  y_speed, rot))
+            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(ChassisSpeeds(-x_speed,
+                                                                                                  -y_speed, -rot))
 
         # Desaturate wheel speeds step based on max robot speed.
         SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.kMaxSpeed)

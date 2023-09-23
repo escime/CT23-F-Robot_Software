@@ -28,7 +28,7 @@ class IntakeSubsystem(commands2.SubsystemBase):
             self.current_state = "intaking"
 
         if not outtake and not self.sensor.get():
-            self.m_intake_motor.set(speed * 0.01)
+            self.m_intake_motor.set(speed * 0.05)
             self.current_state = "holding"
 
         if outtake:

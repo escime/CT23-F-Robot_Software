@@ -11,7 +11,7 @@ class ArmSubsystem(commands2.SubsystemBase):
     encoder = m_arm_motor.getEncoder()
 
     setpoints = {"stow": 0,
-                 "intake": 10.2,
+                 "intake": 10.4,
                  "shoot_high_front": 7,
                  "shoot_mid_front": 6,
                  "shoot_high_back": 3,

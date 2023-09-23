@@ -146,16 +146,18 @@ class RobotContainer:
         """
         if self.m_chooser.getSelected() == "No-op":
             return None
-        elif self.m_chooser.getSelected() == "simple_path":
-            return autoplays.AUTO_simple_path(self.robot_drive, self.leds)
         elif self.m_chooser.getSelected() == "test_commands":
-            return autoplays.AUTO_test_commands(self.robot_drive, self.leds)
-        elif self.m_chooser.getSelected() == "quik_auto":
-            return autoplays.AUTO_quik_auto(self.robot_drive, self.leds)
-        elif self.m_chooser.getSelected() == "s_c_s_c_b_s":
-            return autoplays.AUTO_s_c_s_c_b_s(self.robot_drive, self.leds, self.arm, self.intake)
+            return autoplays.AUTO_test_commands(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "s_c_s_NO_BUMP":
+        #     return autoplays.AUTO_s_c_s_NO_BUMP(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "s_BUMP":
+        #     return autoplays.AUTO_s_BUMP(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "RED_s_BUMP":
+        #     return autoplays.AUTO_RED_s_BUMP(self.robot_drive, self.leds, self.arm, self.intake)
         elif self.m_chooser.getSelected() == "s_b_b":
             return autoplays.AUTO_s_b_b(self.robot_drive, self.leds, self.arm, self.intake)
+        elif self.m_chooser.getSelected() == "simple_auto":
+            return autoplays.AUTO_simple_auto(self.robot_drive, self.leds, self.arm, self.intake)
         else:
             return None
 
@@ -226,10 +228,10 @@ class RobotContainer:
         #     ))
         # )
 
-        commands2.Trigger(lambda: self.intake.sensor.get()).toggleOnFalse(
+        commands2.Trigger(lambda: self.intake.sensor.get()).whileFalse(
             commands2.cmd.run(lambda: self.leds.rainbow_shift()))
-        commands2.Trigger(lambda: self.intake.sensor.get()).toggleOnTrue(
-            commands2.cmd.run(lambda: self.leds.purple_chaser()))
+        # commands2.Trigger(lambda: self.intake.sensor.get()).onTrue(
+        #     commands2.cmd.run(lambda: self.leds.purple_chaser()))
 
         commands2.Trigger(lambda: self.operator_controller_raw.get_button("Y")).toggleOnTrue(
             commands2.cmd.run(lambda: self.intake.manual_control(self.operator_controller_raw.get_axis("LY", 0.06))))
