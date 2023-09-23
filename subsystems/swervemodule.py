@@ -1,9 +1,10 @@
+import ctre
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 # from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from rev import CANSparkMax
-from ctre.sensors import CANCoder, AbsoluteSensorRange
+from ctre.sensors import CANCoder, AbsoluteSensorRange, CANCoderStatusFrame
 from constants import DriveConstants
 import math
 
@@ -25,6 +26,10 @@ class SwerveModule:
         # Set several config items relating to encoders.
         self.drive_encoder.setVelocityConversionFactor(DriveConstants.d_velocity_conversion_factor)
         self.drive_encoder.setPositionConversionFactor(DriveConstants.d_position_conversion_factor)
+
+        self.encoder.setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20)
+        self.encoder.setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 20)
+        # self.encoder.configSensorDirection(not turn_invert)
         self.encoder.setPositionToAbsolute()
         self.encoder.configMagnetOffset(mod_offset)
         self.encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180)
@@ -32,6 +37,7 @@ class SwerveModule:
         # Invert motors based on the passthrough on instantiation.
         self.driveMotor.setInverted(drive_invert)
         self.rotateMotor.setInverted(turn_invert)
+        # print("HELLO, here's this encoder's inversion!" + str(self.encoder.getAllConfigs))
 
         # Set initial state as pointed straight forward @ zero speed.
         self._requested_turn = 0

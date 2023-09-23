@@ -109,7 +109,7 @@ class LEDs(commands2.SubsystemBase):
             self.m_ledBuffer = self.rainbow_pattern
             self.rainbow_pattern = self.rainbow_pattern[1:] + self.rainbow_pattern[:1]
             self.record_time = self.timer.get()
-        self.set_chain_with_notifier()
+        self.set_chain()
         self.current_state = "rainbow_shift"
 
     def flash_color(self, color: [], rate: int):
@@ -123,7 +123,7 @@ class LEDs(commands2.SubsystemBase):
             self.m_ledBuffer = [AddressableLED.LEDData(0, 0, 0)] * self.length
             self.record_time = self.timer.get()
             self.flash_state = True
-        self.set_chain_with_notifier()
+        self.set_chain()
         self.current_state = "flash_color"
 
     def purple_chaser(self):
@@ -132,7 +132,8 @@ class LEDs(commands2.SubsystemBase):
             self.m_ledBuffer = self.purple_pattern
             self.purple_pattern = self.purple_pattern[1:] + self.purple_pattern[:1]
             self.record_time = self.timer.get()
-        self.set_chain_with_notifier()
+        # self.set_chain_with_notifier()
+        self.set_chain()
         self.current_state = "purple_chaser"
 
     def heading_lock(self, heading):
@@ -187,5 +188,5 @@ class LEDs(commands2.SubsystemBase):
                     temp_buffer[k] = AddressableLED.LEDData(r, g, b)
             self.record_time = self.timer.get()
             self.m_ledBuffer = temp_buffer
-        self.set_chain_with_notifier()
+        self.set_chain()
         self.current_state = "fire"

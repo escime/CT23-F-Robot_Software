@@ -128,7 +128,7 @@ def AUTO_quik_auto(drive: DriveSubsystem, leds: LEDs) -> commands2.SequentialCom
 
 
 def AUTO_s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
-                intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
+                     intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
         invert = True
     else:
@@ -170,6 +170,38 @@ def AUTO_s_c_s_c_b_s(drive: DriveSubsystem, leds: LEDs, arm: ArmSubsystem,
             path_command_3,
             commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
         ),
+        commands2.ParallelRaceGroup(
+            commands2.cmd.run(lambda: leds.rainbow_shift(), [leds]),
+            commands2.cmd.run(lambda: drive.auto_balance(-1))
+        )
+    )
+
+
+def AUTO_s_b_b(drive: DriveSubsystem, leds: LEDs,
+               arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
+    if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+        invert = True
+    else:
+        invert = False
+    path1 = PathPlanner.loadPath("7B-CSB", 4, 3, invert)
+    path_command_1 = follow_trajectory(path1, True, drive)
+    return commands2.SequentialCommandGroup(
+        SetArm(arm, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        Shoot(intake, "shoot_high_back"),
+        commands2.WaitCommand(0.25),
+        SetArm(arm, "intake"),
+        Intake(intake, False, 0.25),
+        commands2.ParallelRaceGroup(
+            path_command_1,
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
+        ),
+        commands2.cmd.run(lambda: drive.snap_drive(0, 0, 180)),  # May need to make a legit turn-to-angle command
+        commands2.WaitCommand(1),
+        commands2.cmd.run(lambda: drive.snap_drive(0, -0.5 * DriveConstants.kMaxSpeed, 180)),  # probs no worky
+        commands2.WaitCommand(0.5),
+        SetArm(arm, "stow"),
+        Intake(intake, False, 0),
         commands2.ParallelRaceGroup(
             commands2.cmd.run(lambda: leds.rainbow_shift(), [leds]),
             commands2.cmd.run(lambda: drive.auto_balance(-1))

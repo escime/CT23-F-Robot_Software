@@ -219,6 +219,7 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
+        # return self.gyro.getAngle()
         return self.gyro.getAngle()
 
     def get_turn_rate(self):
@@ -235,7 +236,7 @@ class DriveSubsystem(commands2.SubsystemBase):
         if correction > 180:
             current_heading = current_heading - 180
         rotate_output = self.snap_controller.calculate(current_heading, heading_target)
-        self.drive(x_speed, y_speed, -rotate_output, True)
+        self.drive(x_speed, y_speed, rotate_output, True)
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""

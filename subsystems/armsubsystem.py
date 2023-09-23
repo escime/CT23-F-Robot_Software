@@ -10,17 +10,16 @@ class ArmSubsystem(commands2.SubsystemBase):
     pid = m_arm_motor.getPIDController()
     encoder = m_arm_motor.getEncoder()
 
-    setpoints = {"startup": 0,
-                 "stow": 0,
-                 "intake": 0,
-                 "shoot_high_front": 0,
-                 "shoot_mid_front": 0,
-                 "shoot_high_back": 0,
-                 "shoot_mid_back": 0}
+    setpoints = {"stow": 0,
+                 "intake": 10.2,
+                 "shoot_high_front": 7,
+                 "shoot_mid_front": 6,
+                 "shoot_high_back": 3,
+                 "shoot_mid_back": 2}
 
-    threshold = 20
+    threshold = 1
 
-    current_setpoint = "startup"
+    current_setpoint = "stow"
 
     def __init__(self) -> None:
         super().__init__()
@@ -38,7 +37,7 @@ class ArmSubsystem(commands2.SubsystemBase):
 
     def set_position(self, setpoint) -> None:
         """Set target position of the arm."""
-        self.pid.setReference(setpoint, CANSparkMax.ControlType.kSmartMotion, 1, 0)
+        self.pid.setReference(setpoint, CANSparkMax.ControlType.kPosition, 0, 0)
 
     def get_position(self) -> float:
         """Get the arm's current position."""
@@ -77,6 +76,10 @@ class ArmSubsystem(commands2.SubsystemBase):
         """Get what the arm's current setpoint is."""
         return self.current_setpoint
 
+    def manual_control(self, speed: float):
+        self.m_arm_motor.set(speed)
+
     def periodic(self) -> None:
         """Update the dashboard with the arm's current location."""
         SmartDashboard.putNumber("Arm Position", self.get_position())
+        SmartDashboard.putString("Arm Setpoint", self.get_setpoint())
