@@ -75,8 +75,8 @@ class VisionSubsystem(commands2.SubsystemBase):
         """Update vision variables and robot odometry as fast as scheduler allows."""
         # self.update_values()
 
-        # if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
-        #     self.limelight_table.putNumber("stream", self.pip_mode)
+        if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
+            self.limelight_table.putNumber("stream", self.pip_mode)
 
         # if self.has_targets():
             # current_position = self.robot_drive.get_pose()

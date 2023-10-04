@@ -1,5 +1,5 @@
 from rev import CANSparkMax
-from ctre.sensors import CANCoder
+from ctre.sensors import CANCoder, Pigeon2
 import commands2
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
@@ -8,7 +8,7 @@ from wpimath.controller import PIDController, ProfiledPIDControllerRadians
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig
 from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants, ModuleConstants, AutoConstants
-import navx
+# NAVX import navx
 from wpilib import SerialPort, SmartDashboard, Field2d
 import math
 
@@ -17,13 +17,6 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Creates a new DriveSubsystem
     def __init__(self) -> None:
         super().__init__()
-
-        # Create pose estimator (replacement for odometry).
-        # self.m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics,
-        #                                             Rotation2d.fromDegrees(-self.get_heading()),
-        #                                             (self.m_FL_position, self.m_FR_position, self.m_BL_position,
-        #                                              self.m_BR_position),
-        #                                             Pose2d(Translation2d(0, 0), Rotation2d(0)))
         self.m_odometry = SwerveDrive4PoseEstimator(DriveConstants.m_kinematics,
                                                     Rotation2d.fromDegrees(-self.get_heading()),
                                                     (SwerveModulePosition(0, Rotation2d(0)),
@@ -33,13 +26,9 @@ class DriveSubsystem(commands2.SubsystemBase):
                                                     Pose2d(Translation2d(0, 0), Rotation2d(0)))
 
         # Reset odometry @ instantiation.
-        self.gyro.reset()
+        # NAVX self.gyro.reset()
+        self.gyro.setYaw(0)
         self.reset_encoders()
-        # self.m_odometry.update(Rotation2d.fromDegrees(-self.get_heading()),
-        #                        (self.m_FL.get_position(),
-        #                        self.m_FR.get_position(),
-        #                        self.m_BL.get_position(),
-        #                        self.m_BR.get_position()))
         # Setup snap controller for class-wide use.
         self.snap_controller = PIDController(DriveConstants.snap_controller_PID[0],
                                              DriveConstants.snap_controller_PID[1],
@@ -86,7 +75,8 @@ class DriveSubsystem(commands2.SubsystemBase):
     m_BR_position = m_BR.get_position()
 
     # Instantiate gyro on Serial Bus. This is a NavX, planned to convert to Pigeon 2.0.
-    gyro = navx.AHRS(SerialPort.Port.kUSB)
+    # NAVX gyro = navx.AHRS(SerialPort.Port.kUSB)
+    gyro = Pigeon2(9)
 
     # Create Field2d object to display/track robot position.
     m_field = Field2d()
@@ -186,7 +176,8 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.reset_encoders()
         self.m_BR.reset_encoders()
         self.zero_heading()
-        self.gyro.setAngleAdjustment(pose.rotation().degrees())
+        # NAVX self.gyro.setAngleAdjustment(pose.rotation().degrees())
+        self.gyro.setYaw(pose.rotation().degrees())
         self.m_odometry.resetPosition(Rotation2d.fromDegrees(-self.get_heading()),
                                       (SwerveModulePosition(0, self.m_FL_position.angle),
                                        SwerveModulePosition(0, self.m_FR_position.angle),
@@ -214,20 +205,22 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def zero_heading(self):
         """Reset robot absolute heading to zero."""
-        self.gyro.setAngleAdjustment(0)
-        self.gyro.zeroYaw()
+        # NAVX self.gyro.setAngleAdjustment(0)
+        self.gyro.setYaw(0)
+        # NAVX self.gyro.zeroYaw()
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
-        # return self.gyro.getAngle()
-        return self.gyro.getAngle()
+        # NAVX return self.gyro.getAngle()
+        return -1 * self.gyro.getYaw()
 
-    def get_turn_rate(self):
-        """Return current rate of robot rotation."""
-        if DriveConstants.kGyroReversed:
-            return self.gyro.getRate() * -1.0
-        else:
-            return self.gyro.getRate()
+    # TODO Replace. Built in to NAVX. Not necessary for now, so didn't rewrite for Pigeon 2.
+    # def get_turn_rate(self):
+        # """Return current rate of robot rotation."""
+        # if DriveConstants.kGyroReversed:
+            # return self.gyro.getRate() * -1.0
+        # else:
+        #     return self.gyro.getRate()
 
     def snap_drive(self, x_speed: float, y_speed: float, heading_target: float):
         """Calculate and implement the PID controller for rotating to and maintaining a target heading."""
@@ -240,7 +233,7 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def auto_balance(self, front_back: int):
         """Automatically balance on the charge station. front_back = 1 for forward. -1 for backward."""
-        balance_output = self.balance_controller.calculate(self.gyro.getRoll(), 0)
+        balance_output = self.balance_controller.calculate(-1 * self.gyro.getRoll(), 0)
         if self.balanced is False:
             self.snap_drive(DriveConstants.kMaxSpeed * front_back * balance_output, 0, 0)
         else:

@@ -17,18 +17,24 @@ from commands.intake import Intake
 from commands.turn import Turn
 from commands.drive_to_CS import DriveToCS
 from wpilib import DriverStation
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 
 
-def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: DriveSubsystem) -> \
+def follow_trajectory(traj, first_path: bool, drive: DriveSubsystem) -> \
         commands2.Swerve4ControllerCommand:
     """Return automated command to follow a generated trajectory."""
     theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
                                                     AutoConstants.kThetaControllerConstraints, 0.02)
     theta_controller.enableContinuousInput(-math.pi, math.pi)
-    if first_path:
-        drive.reset_odometry(traj.getInitialHolonomicPose())
-    wpi_traj = traj.asWPILibTrajectory()
+    if type(traj) is PathPlannerTrajectory:
+        if first_path:
+            drive.reset_odometry(traj.getInitialHolonomicPose())
+        wpi_traj = traj.asWPILibTrajectory()
+    else:
+        if first_path:
+            drive.reset_odometry(traj.initialPose())
+        wpi_traj = traj
     scc = commands2.Swerve4ControllerCommand(wpi_traj,
                                              drive.get_pose,
                                              DriveConstants.m_kinematics,
@@ -41,14 +47,18 @@ def follow_trajectory(traj: PathPlannerTrajectory, first_path: bool, drive: Driv
     return scc
 
 
+def generate_wpi_trajectory(start: Pose2d, waypoints: [Translation2d], end: Pose2d, vmax: float, amax: float) \
+        -> Trajectory:
+    return TrajectoryGenerator.generateTrajectory(start, waypoints, end, TrajectoryConfig(vmax, amax))
+
+
 def AUTO_test_commands(drive: DriveSubsystem, leds: LEDs,
                        arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
-    paths = ["A-B"]
-    if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
-        inverted = True
-    else:
-        inverted = False
-    path1 = PathPlanner.loadPath(paths[0], 4, 2, inverted)
+    # if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+    #     inverted = True
+    # else:
+    #     inverted = False
+    path1 = generate_wpi_trajectory(Pose2d(1.75, 4.43, 0), [Translation2d(3.97, 4.77)], Pose2d(6.73, 4.62, -5.53), 4, 3)
     path_command_1 = follow_trajectory(path1, True, drive)
     return commands2.SequentialCommandGroup(
         commands2.ParallelRaceGroup(
@@ -177,7 +187,7 @@ def AUTO_s_b_b(drive: DriveSubsystem, leds: LEDs,
 
 
 def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
-                arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
+                     arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
         path = "SimpleAutoRed"
         inverted = True

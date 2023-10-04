@@ -11,11 +11,11 @@ class ArmSubsystem(commands2.SubsystemBase):
     encoder = m_arm_motor.getEncoder()
 
     setpoints = {"stow": 0,
-                 "intake": 10.4,
-                 "shoot_high_front": 7,
-                 "shoot_mid_front": 6,
-                 "shoot_high_back": 3,
-                 "shoot_mid_back": 2}
+                 "intake": 10,
+                 "shoot_high_front": 6,
+                 "shoot_mid_front": 7.7,
+                 "shoot_high_back": 2.6,
+                 "shoot_mid_back": 1}
 
     threshold = 1
 
@@ -78,6 +78,7 @@ class ArmSubsystem(commands2.SubsystemBase):
 
     def manual_control(self, speed: float):
         self.m_arm_motor.set(speed)
+        self.set_setpoint("manual")
 
     def periodic(self) -> None:
         """Update the dashboard with the arm's current location."""
