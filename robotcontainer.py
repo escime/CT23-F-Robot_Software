@@ -74,7 +74,7 @@ class RobotContainer:
 
         # Set default arm command to auto setpointing.
         self.arm.setDefaultCommand(commands2.cmd.run(lambda: self.arm.auto_setpoint(self.robot_drive),
-                                                     [self.robot_drive, self.arm]))
+                                                     [self.arm]))
 
     def configureTriggers(self) -> None:
         """Used to set up any commands that trigger when a measured event occurs."""
@@ -118,7 +118,7 @@ class RobotContainer:
             ), [self.robot_drive]))
 
         # Reset robot pose to center of the field.
-        commands2.Trigger(lambda: self.driver_controller_raw.get_button("Y")).onTrue(
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("Y")).whileTrue(
             commands2.cmd.run(lambda: self.vision_system.reset_hard_odo(), [self.vision_system, self.robot_drive]))
 
         # Enable Limelight LEDs when B button is held.
@@ -137,7 +137,7 @@ class RobotContainer:
                 commands2.cmd.run(lambda: self.arm.set_setpoint("intake"), [self.arm]),
                 commands2.cmd.run(lambda: self.intake.intake(False, 0.9), [self.intake])))
 
-        # When LB is pressed, the intake spits out anything it has in it without moving the arm
+        # When A is pressed, the intake spits out anything it has in it without moving the arm
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("A")).whileTrue(
             commands2.cmd.run(lambda: self.intake.intake(True, 0.5), [self.intake]))
 
@@ -146,17 +146,30 @@ class RobotContainer:
             commands2.cmd.run(lambda: self.intake.bound_shoot(self.arm), [self.intake, self.arm]))
 
         # Pressing "MENU" enables the directional estimation controller.
-        commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).toggleOnTrue(
-            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
-                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
-                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
-                self.driver_controller_raw.dir_est_ctrl("R")
-            ))
+        # commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).toggleOnTrue(
+        #     commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+        #         self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+        #         self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+        #         self.driver_controller_raw.dir_est_ctrl("R")
+        #     ))
+        # )
+
+        # Reset odometry with vision by using the AUTO PLAY.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).onTrue(
+            commands2.SequentialCommandGroup(
+                commands2.cmd.runOnce(lambda: self.vision_system.calcs_toggle(), [self.vision_system]),
+                autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive))
         )
 
         # When the intake sensor detects a game piece, the robot begins flashing a green alert.
         commands2.Trigger(lambda: self.intake.sensor.get()).whileFalse(
             commands2.cmd.run(lambda: self.leds.flash_color([255, 0, 0], 5), [self.leds]))
+
+        # Force arm to stow.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("X")).toggleOnTrue(
+            commands2.ParallelCommandGroup(
+                commands2.cmd.run(lambda: self.arm.set_setpoint("stow"), [self.arm]),
+                commands2.cmd.run(lambda: self.intake.intake(False, 0), [self.intake])))
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.
@@ -166,6 +179,8 @@ class RobotContainer:
             return None
         elif self.m_chooser.getSelected() == "test_commands":
             return autoplays.AUTO_test_commands(self.vision_system, self.robot_drive, self.leds, self.arm, self.intake)
+        elif self.m_chooser.getSelected() == "reset_with_vision":
+            return autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive)
         elif self.m_chooser.getSelected() == "s_m_b":
             return autoplays.AUTO_s_m_b(self.robot_drive, self.leds, self.arm, self.intake)
         elif self.m_chooser.getSelected() == "simple_auto":

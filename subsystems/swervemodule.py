@@ -98,7 +98,7 @@ class SwerveModule:
         # Set the voltage of each motor based on the PID and FF values. Will likely deprecate when swapping to
         # REV through bore encoder.
         # self.driveMotor.setVoltage(drive_output + drive_ff)
-        # self.rotateMotor.setVoltage(rotate_output)
+        self.rotateMotor.setVoltage(rotate_output)
 
         # TODO Slew rate limiter code TEST
         self.driveMotor.setVoltage(self.drive_filter.calculate(drive_output + drive_ff))

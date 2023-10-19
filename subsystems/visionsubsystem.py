@@ -18,6 +18,7 @@ class VisionSubsystem(commands2.SubsystemBase):
     target_tag = 2
     pov = "back"
     auto_cam_swap = True
+    calc_override = False
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
@@ -77,7 +78,7 @@ class VisionSubsystem(commands2.SubsystemBase):
         # self.update_values()
         # Logic for manual/automatic camera swapping & vision tracking enable/disable
         SmartDashboard.putBoolean("Auto Camera Swap Enabled?", self.auto_cam_swap)
-        if not DriverStation.isAutonomous():
+        if not DriverStation.isAutonomous() and not self.calc_override:
             if self.auto_cam_swap:
                 if 90 < self.robot_drive.get_heading() % 360 <= 270:
                     self.pov = "front"
@@ -91,6 +92,11 @@ class VisionSubsystem(commands2.SubsystemBase):
                     self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 1:
                 self.limelight_table.putNumber("camMode", 1)
+        elif self.calc_override:
+            if self.limelight_table.getNumber("stream", -1) != 1:
+                self.limelight_table.putNumber("stream", 1)
+            if self.limelight_table.getNumber("camMode", -1) != 0:
+                self.limelight_table.putNumber("camMode", 0)
         else:
             if self.limelight_table.getNumber("stream", -1) != 1:
                 self.limelight_table.putNumber("stream", 1)
@@ -165,3 +171,9 @@ class VisionSubsystem(commands2.SubsystemBase):
         self.update_values()
         if self.tv == 1:
             drive.reset_odometry(self.vision_estimate_pose())
+
+    def calcs_toggle(self):
+        if self.calc_override:
+            self.calc_override = False
+        else:
+            self.calc_override = True

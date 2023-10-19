@@ -13,7 +13,7 @@ class ArmSubsystem(commands2.SubsystemBase):
 
     setpoints = {"stow": 0,
                  "intake": 10,
-                 "shoot_high_front": 6,
+                 "shoot_high_front": 5.5,
                  "shoot_mid_front": 7.7,
                  "shoot_high_back": 2.6,
                  "shoot_mid_back": 1}

@@ -18,7 +18,7 @@ from commands.turn import Turn
 from commands.drive_to_CS import DriveToCS
 from commands.vision_estimate import VisionEstimate
 from wpilib import DriverStation
-from wpimath.geometry import Pose2d, Translation2d
+from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 
 
@@ -57,9 +57,9 @@ def generate_wpi_trajectory(start: Pose2d, waypoints: [Translation2d], end: Pose
 def map_to_red(x: float, y: float, theta: float, mapp: bool) -> [float, float, float]:
     """Maps a pose from the blue side of the field to the red side of the field."""
     if mapp:
-        return Pose2d(16.45 - x, y, -1 * theta)
+        return Pose2d(16.45 - x, y, Rotation2d().fromDegrees(-1 * theta))
     else:
-        return Pose2d(x, y, theta)
+        return Pose2d(x, y, Rotation2d().fromDegrees(theta))
 
 
 def map_to_red_trans(x: float, y: float, mapp: bool) -> [float, float]:
@@ -91,6 +91,12 @@ def AUTO_test_commands(vision: VisionSubsystem, drive: DriveSubsystem, leds: LED
     #         commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
     #     )
     # )
+    return commands2.SequentialCommandGroup(
+        VisionEstimate(vision, drive)
+    )
+
+
+def AUTO_reset_with_vision(vision: VisionSubsystem, drive: DriveSubsystem) -> commands2.SequentialCommandGroup:
     return commands2.SequentialCommandGroup(
         VisionEstimate(vision, drive)
     )
@@ -168,43 +174,38 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
                                     [map_to_red_trans(3.19, 4.94, inverted)],
                                     map_to_red(6.73, 4.62, 5.53, inverted), 4, 3)
     path_command_1 = follow_trajectory(path1, True, drive)
-    # path2 = generate_wpi_trajectory(drive.get_pose(),
-    #                                 [],
-    #                                 map_to_red(2.3, 4.6, 0, inverted), 2, 2)
-    # path_command_2 = follow_trajectory(path2, False, drive)
-    # path3 = generate_wpi_trajectory(map_to_red(1.77, 5.53, 2, inverted),
-    #                                 [],
-    #                                 map_to_red(6.73, 4.62, 0, inverted), 2, 2)
-    # path_command_3 = follow_trajectory(path3, False, drive)
     return commands2.SequentialCommandGroup(
         ReturnWheels(drive),
-        # SetArm(arm, "shoot_high_back"),
-        # commands2.WaitCommand(0.5),
-        # Shoot(intake, "shoot_high_back"),
-        # commands2.WaitCommand(0.5),
-        # SetArm(arm, "shoot_mid_front"),
-        # Intake(intake, False, 1),
-        # commands2.WaitCommand(1),
+        SetArm(arm, "shoot_high_back"),
+        commands2.WaitCommand(0.5),
+        Shoot(intake, "shoot_high_back"),
+        commands2.WaitCommand(0.5),
+        SetArm(arm, "shoot_mid_front"),
+        Intake(intake, False, 1),
+        commands2.WaitCommand(1),
         commands2.ParallelRaceGroup(
             path_command_1,
             commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
         ),
         ReturnWheels(drive),
-        # Intake(intake, False, 0),
-        # SetArm(arm, "shoot_mid_back"),
+        Intake(intake, False, 0),
+        SetArm(arm, "shoot_mid_back"),
         commands2.ParallelRaceGroup(
-            gen_and_run(drive.get_pose(), [], map_to_red(2.3, 4.6, 1, inverted), 2, 2, False, drive),
+            gen_and_run(drive.get_pose(),
+                        [map_to_red_trans(3.19, 4.94, inverted)],
+                        map_to_red(2.3, 4.6, 1, inverted), 4, 3, False, drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds])
         ),
         ReturnWheels(drive),
-        # SetArm(arm, "shoot_mid_back"),
-        # commands2.WaitCommand(0.5),
-        # Shoot(intake, "shoot_mid_back"),
-        # commands2.WaitCommand(0.5),
-        # SetArm(arm, "stow"),
-        # Intake(intake, False, 0),
-        # commands2.ParallelRaceGroup(
-        #     path_command_3,
-        #     commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
-        # )
+        SetArm(arm, "shoot_mid_back"),
+        commands2.WaitCommand(0.5),
+        Shoot(intake, "shoot_mid_back"),
+        commands2.WaitCommand(0.5),
+        SetArm(arm, "stow"),
+        Intake(intake, False, 0),
+        ReturnWheels(drive),
+        commands2.ParallelRaceGroup(
+            gen_and_run(drive.get_pose(), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False, drive),
+            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
+        )
     )
