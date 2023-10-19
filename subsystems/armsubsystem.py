@@ -2,6 +2,7 @@ import commands2
 from constants import ArmConstants
 from rev import CANSparkMax
 from wpilib import SmartDashboard
+from subsystems.drivesubsystem import DriveSubsystem
 
 
 class ArmSubsystem(commands2.SubsystemBase):
@@ -85,3 +86,11 @@ class ArmSubsystem(commands2.SubsystemBase):
         """Update the dashboard with the arm's current location."""
         SmartDashboard.putNumber("Arm Position", self.get_position())
         SmartDashboard.putString("Arm Setpoint", self.get_setpoint())
+
+    def auto_setpoint(self, drive: DriveSubsystem):
+        if 90 < drive.get_heading() % 360 <= 270:
+            if self.get_setpoint() != "shoot_high_front":
+                self.set_setpoint("shoot_high_front")
+        else:
+            if self.get_setpoint() != "shoot_mid_back":
+                self.set_setpoint("shoot_mid_back")
