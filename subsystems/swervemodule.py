@@ -1,8 +1,8 @@
 import ctre
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
-# from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
+from wpimath.filter import SlewRateLimiter
 from rev import CANSparkMax
 from ctre.sensors import CANCoder, AbsoluteSensorRange, CANCoderStatusFrame
 from constants import DriveConstants
@@ -70,9 +70,9 @@ class SwerveModule:
         rm.burnFlash()
         dm.burnFlash()
 
-        # Create Slew rate limiter objects.
-        # self.drive_filter = SlewRateLimiter(5)
-        # self.turn_filter = SlewRateLimiter(5)
+        # TODO Create Slew rate limiter objects.
+        self.drive_filter = SlewRateLimiter(DriveConstants.slew_rate_drive)
+        # self.turn_filter = SlewRateLimiter(DriveConstants.slew_rate_turn)
 
     def get_state(self):
         """Get the current SwerveModuleState object."""
@@ -97,11 +97,11 @@ class SwerveModule:
 
         # Set the voltage of each motor based on the PID and FF values. Will likely deprecate when swapping to
         # REV through bore encoder.
-        self.driveMotor.setVoltage(drive_output + drive_ff)
-        self.rotateMotor.setVoltage(rotate_output)
+        # self.driveMotor.setVoltage(drive_output + drive_ff)
+        # self.rotateMotor.setVoltage(rotate_output)
 
-        # Slew rate limiter code is commented out for now as it is not necessary for Saber.
-        # self.driveMotor.setVoltage(self.drive_filter.calculate(drive_output + drive_ff))
+        # TODO Slew rate limiter code TEST
+        self.driveMotor.setVoltage(self.drive_filter.calculate(drive_output + drive_ff))
         # self.rotateMotor.setVoltage(self.turn_filter.calculate(rotate_output))
 
     def reset_encoders(self):

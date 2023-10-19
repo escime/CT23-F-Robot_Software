@@ -1,6 +1,8 @@
 import commands2
 from wpilib import AddressableLED, Timer
 import random
+from subsystems.armsubsystem import ArmSubsystem
+from subsystems.drivesubsystem import DriveSubsystem
 
 
 class LEDs(commands2.SubsystemBase):
@@ -65,6 +67,28 @@ class LEDs(commands2.SubsystemBase):
             self.purple_pattern.append(AddressableLED.LEDData(0, 0, 0))
 
         self.heat = [255] * self.length
+
+        # Create auto_set_check patterns.
+        if self.style == "RGB":
+            self.condition_1_met = [AddressableLED.LEDData(255, 0, 0)] * int((self.length / 2))
+            for i in range(0, int(self.length/2)):
+                self.condition_1_met.append(AddressableLED.LEDData(0, 0, 0))
+            self.condition_2_met = [AddressableLED.LEDData(0, 0, 255)] * int((self.length / 2))
+            for i in range(0, int(self.length / 2)):
+                self.condition_2_met.append(AddressableLED.LEDData(0, 0, 0))
+            self.condition_all_met = [AddressableLED.LEDData(255, 0, 0)] * int((self.length / 2))
+            for i in range(0, int(self.length / 2)):
+                self.condition_all_met.append(AddressableLED.LEDData(0, 0, 255))
+        else:
+            self.condition_1_met = [AddressableLED.LEDData(0, 255, 0)] * int((self.length / 2))
+            for i in range(0, int(self.length/2)):
+                self.condition_1_met.append(AddressableLED.LEDData(0, 0, 0))
+            self.condition_2_met = [AddressableLED.LEDData(0, 0, 255)] * int((self.length / 2))
+            for i in range(0, int(self.length / 2)):
+                self.condition_2_met.append(AddressableLED.LEDData(0, 0, 0))
+            self.condition_all_met = [AddressableLED.LEDData(255, 0, 0)] * int((self.length / 2))
+            for i in range(0, int(self.length / 2)):
+                self.condition_all_met.append(AddressableLED.LEDData(0, 0, 255))
 
     def clear_buffer(self) -> None:
         """Clear the master buffer of all data."""
@@ -190,3 +214,19 @@ class LEDs(commands2.SubsystemBase):
             self.m_ledBuffer = temp_buffer
         self.set_chain()
         self.current_state = "fire"
+
+    def auto_set_check(self, drive: DriveSubsystem, arm: ArmSubsystem):
+        if self.timer.get() - self.animation_delay > self.record_time:
+            if drive.balanced and not -1 < arm.get_position() < 1:
+                self.m_ledBuffer = self.condition_1_met
+                self.condition_1_met = self.condition_1_met[1:] + self.condition_1_met[:1]
+            elif not drive.balanced and -1 < arm.get_position() < 1:
+                self.m_ledBuffer = self.condition_2_met
+                self.condition_2_met = self.condition_2_met[1:] + self.condition_2_met[:1]
+            elif drive.balanced and -1 < arm.get_position() < 1:
+                self.m_ledBuffer = self.condition_all_met
+                self.condition_all_met = self.condition_all_met[1:] + self.condition_all_met[:1]
+            else:
+                self.m_ledBuffer = [AddressableLED.LEDData(0, 0, 0)] * self.length
+            self.record_time = self.timer.get()
+        self.set_chain()

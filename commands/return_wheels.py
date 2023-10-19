@@ -13,10 +13,10 @@ class ReturnWheels(commands2.CommandBase):
 
     def isFinished(self) -> bool:
         angle = self.robot_drive.m_FL.get_state().angle.degrees()
-        if 0 < angle < 10 or 170 < angle < 190 or 350 < angle < 360:
+        if 0 < abs(angle) < 10 or 170 < abs(angle) < 190 or 350 < abs(angle) < 360:
             return True
         else:
             return False
 
-    def getInterruptionBehavior(self) -> commands2.Command.InterruptionBehavior:
-        return commands2.Command.InterruptionBehavior.kCancelSelf
+    # def getInterruptionBehavior(self) -> commands2.Command.InterruptionBehavior:
+    #     return commands2.Command.InterruptionBehavior.kCancelSelf

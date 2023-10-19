@@ -15,8 +15,9 @@ class VisionSubsystem(commands2.SubsystemBase):
     json_val = {}
     timestamp = 0
     target_led_mode = 1
-    pip_mode = 2
     target_tag = 2
+    pov = "back"
+    auto_cam_swap = True
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
@@ -74,9 +75,27 @@ class VisionSubsystem(commands2.SubsystemBase):
     def periodic(self) -> None:
         """Update vision variables and robot odometry as fast as scheduler allows."""
         # self.update_values()
-
-        if self.limelight_table.getNumber("stream", -1) != self.pip_mode:
-            self.limelight_table.putNumber("stream", self.pip_mode)
+        # Logic for manual/automatic camera swapping & vision tracking enable/disable
+        SmartDashboard.putBoolean("Auto Camera Swap Enabled?", self.auto_cam_swap)
+        if not DriverStation.isAutonomous():
+            if self.auto_cam_swap:
+                if 90 < self.robot_drive.get_heading() % 360 <= 270:
+                    self.pov = "front"
+                else:
+                    self.pov = "back"
+            if self.pov == "front":
+                if self.limelight_table.getNumber("stream", -1) != 2:
+                    self.limelight_table.putNumber("stream", 2)
+            else:
+                if self.limelight_table.getNumber("stream", -1) != 1:
+                    self.limelight_table.putNumber("stream", 1)
+            if self.limelight_table.getNumber("camMode", -1) != 1:
+                self.limelight_table.putNumber("camMode", 1)
+        else:
+            if self.limelight_table.getNumber("stream", -1) != 1:
+                self.limelight_table.putNumber("stream", 1)
+            if self.limelight_table.getNumber("camMode", -1) != 0:
+                self.limelight_table.putNumber("camMode", 0)
 
         # if self.has_targets():
             # current_position = self.robot_drive.get_pose()
@@ -122,3 +141,27 @@ class VisionSubsystem(commands2.SubsystemBase):
             end_pose = Pose2d(1.68, 0.94, 180)
         path = TrajectoryGenerator.generateTrajectory([self.robot_drive.get_pose(), end_pose], estimate_config)
         return path
+
+    def toggle_camera(self) -> None:
+        if self.pov == "front":
+            self.pov = "back"
+        else:
+            self.pov = "front"
+
+    def toggle_auto_cam_swap(self) -> None:
+        if self.auto_cam_swap:
+            self.auto_cam_swap = False
+        else:
+            self.auto_cam_swap = True
+
+    def flash_leds(self) -> None:
+        self.limelight_table.putNumber("ledMode", 2)
+
+    def instant_update(self) -> Pose2d:
+        self.update_values()
+        return self.vision_estimate_pose()
+
+    def conditional_instant_update(self, drive: DriveSubsystem) -> None:
+        self.update_values()
+        if self.tv == 1:
+            drive.reset_odometry(self.vision_estimate_pose())

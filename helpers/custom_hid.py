@@ -18,6 +18,17 @@ class CustomHID:
             self.controller = wpilib.Joystick(port)
             self.controller_type = "generic"
 
+    def reset_controller(self, hid, port):
+        if hid == "xbox":
+            self.controller = wpilib.XboxController(port)
+            self.controller_type = "xbox"
+        elif hid == "ps4":
+            self.controller = wpilib.PS4Controller(port)
+            self.controller_type = "ps4"
+        else:
+            self.controller = wpilib.Joystick(port)
+            self.controller_type = "generic"
+
     def get_button(self, button: str) -> bool:
         value = False
         if self.controller_type == "xbox":
@@ -164,10 +175,10 @@ class CustomHID:
     def dir_est_ctrl(self, stick: str):
         """Directional estimation control. Transforms a thumbstick input into an estimated 'direction'."""
         if stick == "R":
-            x_ax = self.get_axis("RX", 0.1)
+            x_ax = -1 * self.get_axis("RX", 0.1)
             y_ax = self.get_axis("RY", 0.1)
         else:
-            x_ax = self.get_axis("LX", 0.1)
+            x_ax = -1 * self.get_axis("LX", 0.1)
             y_ax = self.get_axis("LY", 0.1)
         if math.sqrt(x_ax * x_ax + y_ax * y_ax) >= 0.99:
             self.direction = math.degrees(math.atan2(x_ax, y_ax)) - 180

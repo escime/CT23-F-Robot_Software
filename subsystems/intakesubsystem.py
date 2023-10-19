@@ -28,18 +28,12 @@ class IntakeSubsystem(commands2.SubsystemBase):
             self.current_state = "intaking"
 
         if not outtake and not self.sensor.get():
-            self.m_intake_motor.set(speed * 0.2)
+            self.m_intake_motor.set(0.8 * 0.1)
             self.current_state = "holding"
 
         if outtake:
             self.m_intake_motor.set(speed * -1)
             self.current_state = "outtaking"
-
-        # TODO Remove. ARMING state deprecated.
-        # if self.m_intake_motor.getOutputCurrent() > IntakeConstants.current_limit or self.current_state == "armed":
-        #     self.go_held = True
-        #     self.current_state = "armed"
-        #     self.arm()
 
     def get_go(self) -> bool:
         """Get whether the robot thinks it has a game object."""
@@ -55,11 +49,6 @@ class IntakeSubsystem(commands2.SubsystemBase):
             self.intake(True, IntakeConstants.high_back_power)
         elif setpoint == "shoot_mid_back":
             self.intake(True, IntakeConstants.mid_back_power)
-
-    # TODO Remove. ARMING state deprecated.
-    # def arm(self) -> None:
-    #     """Set the intake into the "armed" state where it attempts to keep the game object in grip."""
-    #     self.m_intake_motor.set(IntakeConstants.armed_speed)
 
     def bound_shoot(self, arm: ArmSubsystem):
         """Shoot based on arm setpoint."""

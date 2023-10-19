@@ -32,6 +32,7 @@ class ArmSubsystem(commands2.SubsystemBase):
         self.pid.setSmartMotionMinOutputVelocity(ArmConstants.minVel, 1)
         self.pid.setSmartMotionMaxAccel(ArmConstants.maxAcc, 1)
         self.pid.setSmartMotionAllowedClosedLoopError(ArmConstants.allowedErr, 1)
+        self.encoder.setPosition(0)
 
         self.m_arm_motor.burnFlash()
 

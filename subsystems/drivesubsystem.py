@@ -8,8 +8,7 @@ from wpimath.controller import PIDController, ProfiledPIDControllerRadians
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig
 from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants, ModuleConstants, AutoConstants
-# NAVX import navx
-from wpilib import SerialPort, SmartDashboard, Field2d
+from wpilib import SmartDashboard, Field2d
 import math
 
 
@@ -26,9 +25,9 @@ class DriveSubsystem(commands2.SubsystemBase):
                                                     Pose2d(Translation2d(0, 0), Rotation2d(0)))
 
         # Reset odometry @ instantiation.
-        # NAVX self.gyro.reset()
         self.gyro.setYaw(0)
         self.reset_encoders()
+
         # Setup snap controller for class-wide use.
         self.snap_controller = PIDController(DriveConstants.snap_controller_PID[0],
                                              DriveConstants.snap_controller_PID[1],
@@ -39,6 +38,8 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.balance_controller = PIDController(DriveConstants.balance_PID[0],
                                                 DriveConstants.balance_PID[1],
                                                 DriveConstants.balance_PID[2])
+
+        # Setup a couple indicators.
         self.balanced = True
         self.debug_mode = False
 
@@ -74,8 +75,7 @@ class DriveSubsystem(commands2.SubsystemBase):
     m_BL_position = m_BL.get_position()
     m_BR_position = m_BR.get_position()
 
-    # Instantiate gyro on Serial Bus. This is a NavX, planned to convert to Pigeon 2.0.
-    # NAVX gyro = navx.AHRS(SerialPort.Port.kUSB)
+    # Instantiate gyro.
     gyro = Pigeon2(9)
 
     # Create Field2d object to display/track robot position.
@@ -85,8 +85,6 @@ class DriveSubsystem(commands2.SubsystemBase):
         """The default drive command for the robot. This is the math that makes swerve drive work."""
         # If in field relative mode, get swerve module states.
         if field_relative:
-            # swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
-            #     ChassisSpeeds.fromFieldRelativeSpeeds(x_speed, y_speed, rot, self.gyro.getRotation2d()))
             swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
                 ChassisSpeeds.fromFieldRelativeSpeeds(-x_speed, -y_speed, -rot,
                                                       Rotation2d.fromDegrees(-self.get_heading())))
@@ -163,7 +161,9 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def get_pose(self):
         """Return pose estimator's estimated position."""
-        return self.m_odometry.getEstimatedPosition()
+        # TODO CHECK IF THIS FIXES LOGGING/TRAJECTORY ISSUES
+        return Pose2d(self.m_odometry.getEstimatedPosition().x, self.m_odometry.getEstimatedPosition().y,
+                      self.m_odometry.getEstimatedPosition().rotation())
 
     def add_vision(self, pose: Pose2d, timestamp: float):
         """Add a vision measurement from the limelight and integrate into robot pose using a Kalman filter."""
@@ -176,7 +176,6 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.reset_encoders()
         self.m_BR.reset_encoders()
         self.zero_heading()
-        # NAVX self.gyro.setAngleAdjustment(pose.rotation().degrees())
         self.gyro.setYaw(pose.rotation().degrees())
         self.m_odometry.resetPosition(Rotation2d.fromDegrees(-self.get_heading()),
                                       (SwerveModulePosition(0, self.m_FL_position.angle),
@@ -184,8 +183,6 @@ class DriveSubsystem(commands2.SubsystemBase):
                                        SwerveModulePosition(0, self.m_BL_position.angle),
                                        SwerveModulePosition(0, self.m_BR_position.angle)),
                                       pose)
-        # self.m_odometry.resetPosition(self.gyro.getRotation2d(), (self.m_FL_position, self.m_FR_position,
-        # self.m_BL_position, self.m_BR_position), pose)
 
     def set_module_states(self, desired_states):
         """Set swerve module states given a list of target states."""
@@ -205,22 +202,11 @@ class DriveSubsystem(commands2.SubsystemBase):
 
     def zero_heading(self):
         """Reset robot absolute heading to zero."""
-        # NAVX self.gyro.setAngleAdjustment(0)
         self.gyro.setYaw(0)
-        # NAVX self.gyro.zeroYaw()
 
     def get_heading(self):
         """Retrieve robot heading from the IMU."""
-        # NAVX return self.gyro.getAngle()
         return -1 * self.gyro.getYaw()
-
-    # TODO Replace. Built in to NAVX. Not necessary for now, so didn't rewrite for Pigeon 2.
-    # def get_turn_rate(self):
-        # """Return current rate of robot rotation."""
-        # if DriveConstants.kGyroReversed:
-            # return self.gyro.getRate() * -1.0
-        # else:
-        #     return self.gyro.getRate()
 
     def snap_drive(self, x_speed: float, y_speed: float, heading_target: float):
         """Calculate and implement the PID controller for rotating to and maintaining a target heading."""

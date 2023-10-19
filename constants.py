@@ -42,7 +42,7 @@ class DriveConstants:
     m_BR_location = Translation2d(-0.244, -0.244)
     m_kinematics = SwerveDrive4Kinematics(m_FL_location, m_FR_location, m_BL_location, m_BR_location)
 
-    snap_controller_PID = [0.12, 0, 0]
+    snap_controller_PID = [0.17, 0, 0]
     drive_controller_PID = [1.5, 0, 0]
     azimuth_controller_PID = [2, 0, 0]
     drive_controller_FF = [0.22/12, 1.0/12, 0.23/12]
@@ -57,6 +57,9 @@ class DriveConstants:
     azimuth_current_limit = 38
 
     balance_PID = [0.01, 0, 0]
+
+    slew_rate_drive = 50
+    slew_rate_turn = 0
 
 
 class AutoConstants:

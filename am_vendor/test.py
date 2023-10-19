@@ -2,7 +2,7 @@ from wpilib import CAN  # CANData, CANStatus
 
 
 class AMHBE:
-    """AndyMark Hex Bore Encoder"""
+    """TEST"""
     can_id = None
 
     def __init__(self, can_id):
