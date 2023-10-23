@@ -44,18 +44,38 @@ class LEDs(commands2.SubsystemBase):
 
         # Setup rainbow pattern default
         if self.style == "RGB":
-            for i in range(0, int(self.length / 5)):
+            for i in range(0, int(self.length / 15)):
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(255, 213, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 213, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 213, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(0, 47, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 47, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 47, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 238))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 238))
                 self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 238))
         elif self.style == "GRB":
-            for i in range(0, int(self.length / 5)):
+            for i in range(0, int(self.length / 15)):
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(213, 255, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(213, 255, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(213, 255, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
+                self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(255, 0, 0))
                 self.rainbow_pattern.append(AddressableLED.LEDData(47, 0, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(47, 0, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(47, 0, 255))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 238))
+                self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 238))
                 self.rainbow_pattern.append(AddressableLED.LEDData(0, 255, 238))
 
         # Setup purple chase pattern default

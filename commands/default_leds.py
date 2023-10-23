@@ -9,7 +9,8 @@ class DefaultLEDs(commands2.CommandBase):
         self.addRequirements(leds)
 
     def initialize(self) -> None:
-        self.leds.purple_chaser()
+        # self.leds.purple_chaser()
+        self.leds.rainbow_shift()
 
     def isFinished(self) -> bool:
         return True
