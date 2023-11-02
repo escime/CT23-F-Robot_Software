@@ -1,4 +1,3 @@
-import ctre
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
@@ -70,7 +69,6 @@ class SwerveModule:
         rm.burnFlash()
         dm.burnFlash()
 
-        # TODO Create Slew rate limiter objects.
         self.drive_filter = SlewRateLimiter(DriveConstants.slew_rate_drive)
         # self.turn_filter = SlewRateLimiter(DriveConstants.slew_rate_turn)
 
@@ -100,7 +98,6 @@ class SwerveModule:
         # self.driveMotor.setVoltage(drive_output + drive_ff)
         self.rotateMotor.setVoltage(rotate_output)
 
-        # TODO Slew rate limiter code TEST
         self.driveMotor.setVoltage(self.drive_filter.calculate(drive_output + drive_ff))
         # self.rotateMotor.setVoltage(self.turn_filter.calculate(rotate_output))
 

@@ -1,6 +1,6 @@
 import commands2
 from ntcore import NetworkTableInstance
-from wpilib import SmartDashboard, DriverStation
+from wpilib import SmartDashboard, DriverStation, Timer
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from subsystems.drivesubsystem import DriveSubsystem
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
@@ -19,11 +19,14 @@ class VisionSubsystem(commands2.SubsystemBase):
     pov = "back"
     auto_cam_swap = True
     calc_override = False
+    timer = Timer()
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
         self.robot_drive = robot_drive  # This is structurally not great but necessary for certain features.
         self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight")
+        self.timer.start()
+        self.record_time = self.timer.get()
 
     def toggle_leds(self, on: bool):
         if on:
@@ -97,6 +100,18 @@ class VisionSubsystem(commands2.SubsystemBase):
                 self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 0:
                 self.limelight_table.putNumber("camMode", 0)
+            # If calc_override is TRUE, update odometry from camera every 0.5s.
+            if self.timer.get() - 0.5 > self.record_time:
+                self.update_values()
+                if self.has_targets():
+                    current_position = self.robot_drive.get_pose()
+                    vision_estimate = self.vision_estimate_pose()
+                    SmartDashboard.putString("Vision Estimated Pose", str(vision_estimate))
+
+                    if abs(current_position.x - vision_estimate.x) < 1 and \
+                            abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
+                        self.robot_drive.add_vision(vision_estimate, self.timestamp)
+                self.record_time = self.timer.get()
         else:
             if self.limelight_table.getNumber("stream", -1) != 1:
                 self.limelight_table.putNumber("stream", 1)

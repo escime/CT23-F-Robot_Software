@@ -31,11 +31,6 @@ class DriveConstants:
     kMaxAngularSpeed = 20  # Set max rotation speed rot/s 20
     kGyroReversed = False
 
-    # Kinematics for ProtoToot'r
-    # m_FL_location = Translation2d(0.289, 0.289)  # position of wheel center in meters
-    # m_FR_location = Translation2d(0.289, -0.289)
-    # m_BL_location = Translation2d(-0.289, 0.289)
-    # m_BR_location = Translation2d(-0.289, -0.289)
     m_FL_location = Translation2d(0.244, 0.244)
     m_FR_location = Translation2d(0.244, -0.244)
     m_BL_location = Translation2d(-0.244, 0.244)
@@ -82,25 +77,21 @@ class ModuleConstants:
     fl_drive_id = 10
     fl_turn_id = 11
     fl_encoder_id = 12
-    # fl_zero_offset = -78.75  # ProtoToot'r
     fl_zero_offset = -264.11
 
     fr_drive_id = 13
     fr_turn_id = 14
     fr_encoder_id = 15
-    # fr_zero_offset = -175.341797  # ProtoToot'r
     fr_zero_offset = -297.77
 
     br_drive_id = 16
     br_turn_id = 17
     br_encoder_id = 18
-    # bl_zero_offset = -293.554688  # ProtoToot'r
     br_zero_offset = -77.34
 
     bl_drive_id = 19
     bl_turn_id = 20
     bl_encoder_id = 21
-    # br_zero_offset = -250.136719  # ProtoToot'r
     bl_zero_offset = -160.49
 
 

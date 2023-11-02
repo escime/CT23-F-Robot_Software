@@ -186,6 +186,10 @@ class RobotContainer:
             commands2.cmd.run(lambda: self.intake.manual_control(
                 self.operator_controller_raw.get_axis("RY", 0.05)), [self.intake]))
 
+        # At the end of auto, enable parking brake.
+        commands2.Trigger(lambda: DriverStation.getMatchTime() <= 0.5 and DriverStation.isAutonomous()).whileTrue(
+            commands2.cmd.run(lambda: self.robot_drive.drive_lock(), [self.robot_drive]))
+
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.
         Returns the command to run in autonomous
