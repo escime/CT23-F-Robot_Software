@@ -11,7 +11,7 @@ import math
 class SwerveModule:
     driveMotor: CANSparkMax
     rotateMotor: CANSparkMax
-    encoder: CANCoder
+    encoder: CANcoder
 
     def __init__(self, dm: CANSparkMax, rm: CANSparkMax, enc, mod_offset, turn_invert, drive_invert):
         # Connect the passed items to default variables.

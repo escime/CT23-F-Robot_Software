@@ -9,7 +9,6 @@ from subsystems.leds import LEDs
 from subsystems.armsubsystem import ArmSubsystem
 from subsystems.intakesubsystem import IntakeSubsystem
 from subsystems.visionsubsystem import VisionSubsystem
-from pathplannerlib import PathPlanner, PathPlannerTrajectory
 from commands.return_wheels import ReturnWheels
 from commands.set_arm import SetArm
 from commands.shoot import Shoot
@@ -22,20 +21,19 @@ from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 
 
-def follow_trajectory(traj: PathPlannerTrajectory | Trajectory, first_path: bool, drive: DriveSubsystem) -> \
+def follow_trajectory(traj: Trajectory, first_path: bool, drive: DriveSubsystem) -> \
         commands2.Swerve4ControllerCommand:
     """Return automated command to follow a generated trajectory."""
     theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
                                                     AutoConstants.kThetaControllerConstraints, 0.02)
     theta_controller.enableContinuousInput(-math.pi, math.pi)
-    if type(traj) is PathPlannerTrajectory:
-        if first_path:
-            drive.reset_odometry(traj.getInitialHolonomicPose())
-        wpi_traj = traj.asWPILibTrajectory()
-    else:
-        if first_path:
-            drive.reset_odometry(traj.initialPose())
-        wpi_traj = traj
+    # if type(traj) is PathPlannerTrajectory:
+    #     if first_path:
+    #         drive.reset_odometry(traj.getInitialHolonomicPose())
+    #     wpi_traj = traj.asWPILibTrajectory()
+    if first_path:
+        drive.reset_odometry(traj.initialPose())
+    wpi_traj = traj
     scc = commands2.Swerve4ControllerCommand(wpi_traj,
                                              drive.get_pose,
                                              DriveConstants.m_kinematics,
@@ -107,12 +105,11 @@ def AUTO_s_m_b(drive: DriveSubsystem, leds: LEDs,
     """Score -> Mobility -> Balance."""
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
         inverted = True
-        path = "RED_7B-CSB"
     else:
         inverted = False
-        path = "7B-CSB"
-    path1 = PathPlanner.loadPath(path, 2, 2, inverted)
-    path_command_1 = follow_trajectory(path1, True, drive)
+    path_command_1 = gen_and_run(map_to_red(1.74, 2.73, 0, inverted),
+                                 [map_to_red_trans(4.14, 2.73, inverted)],
+                                 map_to_red(7.00, 2.73, 0, inverted), 2, 2, True, drive)
     return commands2.SequentialCommandGroup(
         SetArm(arm, "shoot_high_back"),
         commands2.WaitCommand(0.5),
@@ -122,17 +119,17 @@ def AUTO_s_m_b(drive: DriveSubsystem, leds: LEDs,
         Intake(intake, False, 0),
         commands2.ParallelRaceGroup(
             path_command_1,
-            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), leds)
         ),
         commands2.WaitCommand(1),
         commands2.ParallelRaceGroup(
             Turn(drive, 0),
-            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 5), [leds])),
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 5), leds)),
         commands2.ParallelRaceGroup(
             DriveToCS(drive, 0),
-            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 5), [leds])),
+            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 5), leds)),
         commands2.ParallelRaceGroup(
-            commands2.cmd.run(lambda: leds.rainbow_shift(), [leds]),
+            commands2.cmd.run(lambda: leds.rainbow_shift(), leds),
             commands2.cmd.run(lambda: drive.auto_balance(-1))
         )
     )
@@ -147,8 +144,9 @@ def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
     else:
         path = "SimpleAutoBlue"
         inverted = False
-    path1 = PathPlanner.loadPath(path, 2, 2, inverted)
-    path_command_1 = follow_trajectory(path1, True, drive)
+    path_command_1 = gen_and_run(map_to_red(1.81, 5.05, 0, inverted),
+                                 [],
+                                 map_to_red(6.50, 5.05, 0, inverted), 2, 2, True, drive)
     return commands2.SequentialCommandGroup(
         SetArm(arm, "shoot_high_back"),
         commands2.WaitCommand(0.5),
@@ -158,7 +156,7 @@ def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
         Intake(intake, False, 0),
         commands2.ParallelRaceGroup(
             path_command_1,
-            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), leds)
         )
     )
 
@@ -185,7 +183,7 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         commands2.WaitCommand(1),
         commands2.ParallelRaceGroup(
             path_command_1,
-            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), leds)
         ),
         ReturnWheels(drive),
         Intake(intake, False, 0),
@@ -194,7 +192,7 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
             gen_and_run(drive.get_pose(),
                         [map_to_red_trans(3.19, 4.94, inverted)],
                         map_to_red(2.3, 4.6, 1, inverted), 4, 3, False, drive),
-            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds])
+            commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), leds)
         ),
         ReturnWheels(drive),
         SetArm(arm, "shoot_mid_back"),
@@ -206,6 +204,6 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         ReturnWheels(drive),
         commands2.ParallelRaceGroup(
             gen_and_run(drive.get_pose(), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False, drive),
-            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
+            commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), leds)
         )
     )

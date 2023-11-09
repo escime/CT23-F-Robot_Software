@@ -1,5 +1,7 @@
 from rev import CANSparkMax
-from ctre.sensors import CANCoder, Pigeon2
+# from phoenix6 import CANcoder, Pigeon2
+# from phoenix6.configs import pigeon2_configs
+from phoenix5 import CANCoder, Pigeon2
 import commands2
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
@@ -26,6 +28,8 @@ class DriveSubsystem(commands2.SubsystemBase):
 
         # Reset odometry @ instantiation.
         self.gyro.setYaw(0)
+        # pigeon2_configs.SensorDirectionValue.value = 0
+        # self.gyro.configurator.apply(pigeon2_configs.SensorDirectionValue)
         self.reset_encoders()
 
         # Setup snap controller for class-wide use.
