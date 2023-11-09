@@ -3,7 +3,7 @@ from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from wpimath.filter import SlewRateLimiter
 from rev import CANSparkMax
-from ctre.sensors import CANCoder, AbsoluteSensorRange, CANCoderStatusFrame
+from phoenix5.sensors import CANCoder, AbsoluteSensorRange, CANCoderStatusFrame
 from constants import DriveConstants
 import math
 

@@ -139,10 +139,8 @@ def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
                      arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     """Score -> Mobility."""
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
-        path = "SimpleAutoRed"
         inverted = True
     else:
-        path = "SimpleAutoBlue"
         inverted = False
     path_command_1 = gen_and_run(map_to_red(1.81, 5.05, 0, inverted),
                                  [],
