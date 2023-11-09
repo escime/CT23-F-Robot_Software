@@ -92,7 +92,9 @@ def AUTO_test_commands(vision: VisionSubsystem, drive: DriveSubsystem, leds: LED
     #     )
     # )
     return commands2.SequentialCommandGroup(
-        VisionEstimate(vision, drive)
+        commands2.ConditionalCommand(VisionEstimate(vision, drive),
+                                     commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds]),
+                                     vision.tv == 1)
     )
 
 
@@ -207,5 +209,18 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         commands2.ParallelRaceGroup(
             gen_and_run(drive.get_pose(), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False, drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
+        )
+    )
+
+
+def AUTO_path_tuning(drive: DriveSubsystem, leds: LEDs, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
+    # commands2.ConditionalCommand(commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds]),
+    #                              commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds]),
+    #                              intake.sensor.get())
+    return commands2.SequentialCommandGroup(
+        ReturnWheels(drive),
+        commands2.ParallelRaceGroup(
+            gen_and_run(map_to_red(0, 0, 0, False), [], map_to_red(0.6096, 0, 0, False), 1, 1, True, drive),
+            commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
         )
     )

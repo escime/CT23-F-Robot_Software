@@ -3,8 +3,10 @@ from ntcore import NetworkTableInstance
 from wpilib import SmartDashboard, DriverStation, Timer
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from subsystems.drivesubsystem import DriveSubsystem
+from constants import VisionConstants
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 import math
+from wpimath.controller import PIDController
 
 
 class VisionSubsystem(commands2.SubsystemBase):
@@ -12,6 +14,9 @@ class VisionSubsystem(commands2.SubsystemBase):
     tv = 0.0
     ta = 0.0
     tl = 0.0
+    ty = 0.0
+    tx = 0.0
+    tag_id = 1
     json_val = {}
     timestamp = 0
     target_led_mode = 1
@@ -20,6 +25,8 @@ class VisionSubsystem(commands2.SubsystemBase):
     auto_cam_swap = True
     calc_override = False
     timer = Timer()
+    turn_to_target_controller = PIDController(VisionConstants.turnkP, 0, 0)
+    approach_target_controller = PIDController(VisionConstants.rangekP, 0, 0)
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
@@ -40,7 +47,10 @@ class VisionSubsystem(commands2.SubsystemBase):
         """Update relevant values from LL NT to robot variables."""
         self.tv = self.limelight_table.getEntry("tv").getDouble(0)  # Get "target acquired" boolean as a 1.0 or 0.0.
         self.ta = self.limelight_table.getEntry("ta").getDouble(0)  # Get "target area of image" as a double.
-        self.tl = self.limelight_table.getEntry("tl").getDouble(0)  # Get pipeline latency contribution. Unused.
+        # self.tl = self.limelight_table.getEntry("tl").getDouble(0)  # Get pipeline latency contribution. Unused.
+        self.ty = self.limelight_table.getEntry("ty").getDouble(0.0)
+        self.tx = self.limelight_table.getEntry("tx").getDouble(0.0)
+        self.tag_id = self.limelight_table.getEntry("tid").getDouble(0)
         self.json_val = self.limelight_table.getEntry("json").getString("0")  # Grab the entire json pull as a string.
         first_index = str(self.json_val).find("\"ts\"")  # Locate the first string index for timestamp.
         adjusted_json = str(self.json_val)[first_index + 5:]  # Substring the JSON to remove everything before timestamp
@@ -81,21 +91,21 @@ class VisionSubsystem(commands2.SubsystemBase):
         # self.update_values()
         # Logic for manual/automatic camera swapping & vision tracking enable/disable
         SmartDashboard.putBoolean("Auto Camera Swap Enabled?", self.auto_cam_swap)
-        if not DriverStation.isAutonomous() and not self.calc_override:
-            if self.auto_cam_swap:
-                if 90 < self.robot_drive.get_heading() % 360 <= 270:
+        if not DriverStation.isAutonomous() and not self.calc_override:  # Not in auto and not overriding calcs.
+            if self.auto_cam_swap:  # Auto cam swap is on.
+                if 90 < self.robot_drive.get_heading() % 360 <= 270:  # Robot is facing towards driver station.
                     self.pov = "front"
-                else:
+                else:  # Robot is facing away from driver station.
                     self.pov = "back"
-            if self.pov == "front":
+            if self.pov == "front":  # Camera target POV is front.
                 if self.limelight_table.getNumber("stream", -1) != 2:
                     self.limelight_table.putNumber("stream", 2)
-            else:
+            else:  # Camera target POV is back.
                 if self.limelight_table.getNumber("stream", -1) != 1:
                     self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 1:
                 self.limelight_table.putNumber("camMode", 1)
-        elif self.calc_override:
+        elif self.calc_override:  # Calc override is on.
             if self.limelight_table.getNumber("stream", -1) != 1:
                 self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 0:
@@ -112,7 +122,7 @@ class VisionSubsystem(commands2.SubsystemBase):
                             abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
                         self.robot_drive.add_vision(vision_estimate, self.timestamp)
                 self.record_time = self.timer.get()
-        else:
+        else:  # Robot is in auto.
             if self.limelight_table.getNumber("stream", -1) != 1:
                 self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 0:
@@ -184,7 +194,7 @@ class VisionSubsystem(commands2.SubsystemBase):
 
     def conditional_instant_update(self, drive: DriveSubsystem) -> None:
         self.update_values()
-        if self.tv == 1:
+        if self.has_targets():
             drive.reset_odometry(self.vision_estimate_pose())
 
     def calcs_toggle(self):
@@ -192,3 +202,48 @@ class VisionSubsystem(commands2.SubsystemBase):
             self.calc_override = False
         else:
             self.calc_override = True
+
+    def calculate_range_with_tag(self):
+        if self.tag_id in [1, 2, 3, 6, 7, 8]:
+            angle_to_goal = (VisionConstants.rotation_from_horizontal + self.ty) * math.pi / 180
+            target_range = (VisionConstants.tag_heights[self.tag_id] -
+                            VisionConstants.lens_height) / math.atan(angle_to_goal)
+        else:
+            target_range = -1
+        return target_range
+
+    def rotate_to_target(self, drive: DriveSubsystem, x_speed: float, y_speed: float) -> None:
+        if self.has_targets():
+            if self.tx < -VisionConstants.turn_to_target_error_max:
+                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) + VisionConstants.min_command
+            elif self.tx > VisionConstants.turn_to_target_error_max:
+                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) - VisionConstants.min_command
+            else:
+                rotate_output = 0
+            drive.drive(x_speed, y_speed, rotate_output, True)
+
+    def calculate_range_area(self):
+        """This is intended for 'bad' ranging using area for something like closing to a game piece."""
+        lookup_area_percent = [1, 0.5, 0]
+        lookup_distance_in = [1, 2, 3]
+        solution = "null"
+        for x in range(0, len(lookup_area_percent) - 1):
+            if lookup_area_percent[x] < float(self.ta) < lookup_area_percent[x+1]:
+                m = (lookup_distance_in[x+1] - lookup_distance_in[x]) / (lookup_area_percent[x+1] -
+                                                                         lookup_area_percent[x])
+                solution = m * (lookup_area_percent[x+1] - lookup_area_percent[x]) + lookup_distance_in[x]
+        return solution
+
+    def range_and_turn_to_target(self, drive: DriveSubsystem, target_range: float) -> None:
+        if self.has_targets():
+            if self.tx < -VisionConstants.turn_to_target_error_max:
+                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) + VisionConstants.min_command
+            elif self.tx > VisionConstants.turn_to_target_error_max:
+                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) - VisionConstants.min_command
+            else:
+                rotate_output = 0
+            if self.calculate_range_area() is not "null":
+                drive_output = self.approach_target_controller.calculate(self.calculate_range_area(), target_range)
+            else:
+                drive_output = 0
+            drive.drive(drive_output, 0, rotate_output, False)

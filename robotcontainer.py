@@ -14,7 +14,7 @@ import autoplays
 from commands.default_leds import DefaultLEDs
 # from commands.notifier_led import NotifierLEDs
 from commands.debug_mode import DebugMode
-from commands.auto_leds import AutoLEDs
+# from commands.auto_leds import AutoLEDs
 from helpers.custom_hid import CustomHID
 
 
@@ -190,6 +190,15 @@ class RobotContainer:
         commands2.Trigger(lambda: DriverStation.getMatchTime() <= 0.5 and DriverStation.isAutonomous()).whileTrue(
             commands2.cmd.run(lambda: self.robot_drive.drive_lock(), [self.robot_drive]))
 
+        # Tap RB to engage turn-to-target.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("RB")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.vision_system.rotate_to_target(
+                self.robot_drive,
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed),
+                              [self.vision_system, self.robot_drive])
+        )
+
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.
         Returns the command to run in autonomous
@@ -206,5 +215,7 @@ class RobotContainer:
             return autoplays.AUTO_simple_auto(self.robot_drive, self.leds, self.arm, self.intake)
         elif self.m_chooser.getSelected() == "s_c_s_m_FLAT":
             return autoplays.AUTO_s_c_s_m_FLAT(self.robot_drive, self.leds, self.arm, self.intake)
+        elif self.m_chooser.getSelected() == "path_tuning":
+            return autoplays.AUTO_path_tuning(self.robot_drive, self.leds, self.intake)
         else:
             return None

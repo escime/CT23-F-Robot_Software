@@ -120,3 +120,13 @@ class IntakeConstants:
     high_back_power = 1
     mid_back_power = 1
     armed_speed = 0
+
+
+class VisionConstants:
+    rotation_from_horizontal = 0  # In degrees.
+    lens_height = 25  # In inches.
+    tag_heights = [20, 20, 20, 20, 20, 20, 20, 20]  # In inches.
+    turnkP = 0.1  # Will require tuning.
+    rangekP = 0.1
+    turn_to_target_error_max = 3  # In degrees.
+    min_command = 1  # Should be in volts, will require tuning.
