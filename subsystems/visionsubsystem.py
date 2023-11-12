@@ -215,35 +215,35 @@ class VisionSubsystem(commands2.SubsystemBase):
     def rotate_to_target(self, drive: DriveSubsystem, x_speed: float, y_speed: float) -> None:
         if self.has_targets():
             if self.tx < -VisionConstants.turn_to_target_error_max:
-                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) + VisionConstants.min_command
+                rotate_output = self.turn_to_target_controller.calculate(0, self.tx) + VisionConstants.min_command
             elif self.tx > VisionConstants.turn_to_target_error_max:
-                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) - VisionConstants.min_command
+                rotate_output = self.turn_to_target_controller.calculate(0, self.tx) - VisionConstants.min_command
             else:
                 rotate_output = 0
             drive.drive(x_speed, y_speed, rotate_output, True)
 
     def calculate_range_area(self):
         """This is intended for 'bad' ranging using area for something like closing to a game piece."""
-        lookup_area_percent = [1, 0.5, 0]
-        lookup_distance_in = [1, 2, 3]
-        solution = "null"
+        lookup_area_percent = [3.56, 0.80, 0.20]
+        lookup_distance_in = [31, 64.5, 125]
+        solution = -1
         for x in range(0, len(lookup_area_percent) - 1):
-            if lookup_area_percent[x] < float(self.ta) < lookup_area_percent[x+1]:
-                m = (lookup_distance_in[x+1] - lookup_distance_in[x]) / (lookup_area_percent[x+1] -
-                                                                         lookup_area_percent[x])
-                solution = m * (lookup_area_percent[x+1] - lookup_area_percent[x]) + lookup_distance_in[x]
+            if lookup_area_percent[x + 1] <= self.ta < lookup_area_percent[x]:
+                m = (lookup_distance_in[x + 1] - lookup_distance_in[x]) / (lookup_area_percent[x + 1] -
+                                                                           lookup_area_percent[x])
+                b = lookup_distance_in[x] - (m * lookup_area_percent[x])
+                solution = (m * self.ta) + b
         return solution
 
     def range_and_turn_to_target(self, drive: DriveSubsystem, target_range: float) -> None:
         if self.has_targets():
-            if self.tx < -VisionConstants.turn_to_target_error_max:
-                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) + VisionConstants.min_command
-            elif self.tx > VisionConstants.turn_to_target_error_max:
-                rotate_output = self.turn_to_target_controller.calculate(self.tx, 0) - VisionConstants.min_command
-            else:
-                rotate_output = 0
-            if self.calculate_range_area() is not "null":
-                drive_output = self.approach_target_controller.calculate(self.calculate_range_area(), target_range)
+            rotate_output = self.turn_to_target_controller.calculate(0, self.tx)
+            ranging = self.calculate_range_area()
+            if ranging != -1:
+                drive_output = self.approach_target_controller.calculate(target_range, ranging)
             else:
                 drive_output = 0
+            SmartDashboard.putNumber("Calculated Range", ranging)
             drive.drive(drive_output, 0, rotate_output, False)
+        else:
+            drive.drive(0, 0, 0, False)

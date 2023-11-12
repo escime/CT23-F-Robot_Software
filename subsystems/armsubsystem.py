@@ -1,7 +1,7 @@
 import commands2
 from constants import ArmConstants
 from rev import CANSparkMax
-from wpilib import SmartDashboard
+from wpilib import SmartDashboard, Mechanism2d
 from subsystems.drivesubsystem import DriveSubsystem
 
 
@@ -22,6 +22,10 @@ class ArmSubsystem(commands2.SubsystemBase):
 
     current_setpoint = "stow"
 
+    mech = Mechanism2d(3, 3)
+    mech_root = mech.getRoot("core", 0, 0)
+    mech_arm = mech_root.appendLigament("Arm", 3, 180)
+
     def __init__(self) -> None:
         super().__init__()
         self.pid.setP(ArmConstants.kP)
@@ -29,10 +33,10 @@ class ArmSubsystem(commands2.SubsystemBase):
         self.pid.setD(ArmConstants.kD)
         self.pid.setFF(ArmConstants.kFF)
         self.pid.setOutputRange(ArmConstants.kMinOutput, ArmConstants.kMaxOutput)
-        self.pid.setSmartMotionMaxVelocity(ArmConstants.maxVel, 1)
-        self.pid.setSmartMotionMinOutputVelocity(ArmConstants.minVel, 1)
-        self.pid.setSmartMotionMaxAccel(ArmConstants.maxAcc, 1)
-        self.pid.setSmartMotionAllowedClosedLoopError(ArmConstants.allowedErr, 1)
+        self.pid.setSmartMotionMaxVelocity(ArmConstants.maxVel, 0)
+        self.pid.setSmartMotionMinOutputVelocity(ArmConstants.minVel, 0)
+        self.pid.setSmartMotionMaxAccel(ArmConstants.maxAcc, 0)
+        self.pid.setSmartMotionAllowedClosedLoopError(ArmConstants.allowedErr, 0)
         self.encoder.setPosition(0)
 
         self.m_arm_motor.burnFlash()
@@ -86,6 +90,8 @@ class ArmSubsystem(commands2.SubsystemBase):
         """Update the dashboard with the arm's current location."""
         SmartDashboard.putNumber("Arm Position", self.get_position())
         SmartDashboard.putString("Arm Setpoint", self.get_setpoint())
+        self.mech_arm.setAngle(self.translate_angle())
+        SmartDashboard.putData("Arm Mech2d", self.mech)
 
     def auto_setpoint(self, drive: DriveSubsystem):
         if 90 < drive.get_heading() % 360 <= 270:
@@ -94,3 +100,6 @@ class ArmSubsystem(commands2.SubsystemBase):
         else:
             if self.get_setpoint() != "shoot_mid_back":
                 self.set_setpoint("shoot_mid_back")
+
+    def translate_angle(self) -> float:
+        return 18 * self.get_position()

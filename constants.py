@@ -61,7 +61,9 @@ class AutoConstants:
     kMaxSpeedMetersPerSecond = 4.0
     kMaxAccelerationMetersPerSecondSquared = 3.0
 
-    kPXController = 10
+    # kPXController = 12
+    # kPYController = 10
+    kPXController = 12
     kPYController = 10
     kPThetaController = 10
     kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(kMaxSpeedMetersPerSecond,
@@ -102,10 +104,10 @@ class ArmConstants:
     kFF = 0
     kMinOutput = -0.3
     kMaxOutput = 0.3
-    maxVel = 0
-    maxAcc = 0
-    minVel = 0
-    allowedErr = 0
+    maxVel = 1
+    maxAcc = 1
+    minVel = -1
+    allowedErr = 0.5
 
     masterControlID = 30
     velocityConversion = 1
@@ -126,7 +128,7 @@ class VisionConstants:
     rotation_from_horizontal = 0  # In degrees.
     lens_height = 25  # In inches.
     tag_heights = [20, 20, 20, 20, 20, 20, 20, 20]  # In inches.
-    turnkP = 0.1  # Will require tuning.
-    rangekP = 0.1
-    turn_to_target_error_max = 3  # In degrees.
-    min_command = 1  # Should be in volts, will require tuning.
+    turnkP = 0.2  # Will require tuning.
+    rangekP = 0.05
+    turn_to_target_error_max = 1  # In degrees.
+    min_command = 0.05  # Should be in volts, will require tuning.

@@ -36,6 +36,7 @@
       "/LiveWindow/Ungrouped/DigitalInput[0]": "Digital Input",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
       "/LiveWindow/Ungrouped/class frc2::SubsystemBase": "Subsystem",
+      "/SmartDashboard/Arm Mech2d": "Mechanism2d",
       "/SmartDashboard/Auto Select": "String Chooser",
       "/SmartDashboard/Debug Mode Enable": "Command",
       "/SmartDashboard/Debug Mode Off": "Command",
@@ -44,6 +45,11 @@
       "/SmartDashboard/Reset Pose": "Command"
     },
     "windows": {
+      "/SmartDashboard/Arm Mech2d": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/Auto Select": {
         "window": {
           "visible": true
@@ -59,6 +65,9 @@
         }
       },
       "SmartDashboard": {
+        "Arm Mech2d": {
+          "open": true
+        },
         "Auto Select": {
           "open": true
         },

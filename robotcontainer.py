@@ -57,7 +57,7 @@ class RobotContainer:
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
         # Setup for all event-trigger commands.
-        self.configureTriggers()
+        self.configureTriggersDefault()
 
         # Setup autonomous selector on the dashboard.
         self.m_chooser = SendableChooser()
@@ -72,8 +72,9 @@ class RobotContainer:
 
         SmartDashboard.putData("Debug Mode On", DebugMode(self.robot_drive, True))
         SmartDashboard.putData("Debug Mode Off", DebugMode(self.robot_drive, False))
+        SmartDashboard.putNumber("Auto Range Setting (in)", 100)
 
-    def configureTriggers(self) -> None:
+    def configureTriggersDefault(self) -> None:
         """Used to set up any commands that trigger when a measured event occurs."""
         # Parking Brake.
         commands2.Trigger(lambda: self.driver_controller_raw.get_trigger("L", 0.05)).whileTrue(
@@ -198,6 +199,98 @@ class RobotContainer:
                 self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed),
                               [self.vision_system, self.robot_drive])
         )
+
+        # Tap LB to engage turn-to-target-and-range.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("LB")).whileTrue(
+            commands2.cmd.run(lambda: self.vision_system.range_and_turn_to_target(
+                self.robot_drive, SmartDashboard.getNumber("Auto Range Setting (in)", 100)),
+                              [self.robot_drive, self.vision_system]))
+
+    def configureTriggersProfile2(self):
+        self.arm.setDefaultCommand(commands2.cmd.run(lambda: self.arm.auto_setpoint(self.robot_drive), [self.arm]))
+
+        # Parking Brake.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_trigger("L", 0.05)).whileTrue(
+            commands2.cmd.run(lambda: self.robot_drive.drive_lock(), [self.robot_drive]))
+
+        # Slow mode.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_trigger("R", 0.05)).whileTrue(
+            commands2.cmd.run(lambda: self.robot_drive.drive_slow(
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("RX", 0.06) * DriveConstants.kMaxAngularSpeed,
+                True,
+                0.5), [self.robot_drive]))
+
+        # Press any direction on the D-pad to enable PID snap to that equivalent angle based on field orientation
+        commands2.Trigger(lambda: self.driver_controller_raw.get_d_pad_pull("W")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                -90
+            ), [self.robot_drive]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_d_pad_pull("E")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                90
+            ), [self.robot_drive]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_d_pad_pull("N")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                0
+            ), [self.robot_drive]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_d_pad_pull("S")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.robot_drive.snap_drive(
+                self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                180
+            ), [self.robot_drive]))
+
+        # Reset robot pose to center of the field.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("Y")).whileTrue(
+            commands2.cmd.run(lambda: self.vision_system.reset_hard_odo(), [self.vision_system, self.robot_drive]))
+
+        # Enable Limelight LEDs when B button is held.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
+            commands2.cmd.run(lambda: self.vision_system.toggle_leds(True), [self.vision_system]))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnFalse(
+            commands2.cmd.run(lambda: self.vision_system.toggle_leds(False), [self.vision_system]))
+
+        # When VIEW is held on driver controller, enable auto balancing.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("VIEW")).whileTrue(
+            commands2.cmd.run(lambda: self.robot_drive.auto_balance(-1), [self.robot_drive]))
+
+        # When RT is pressed, put the arm and intake to their setpoints for intaking.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("RB")).whileTrue(
+            commands2.ParallelCommandGroup(
+                commands2.cmd.run(lambda: self.arm.set_setpoint("intake"), [self.arm]),
+                commands2.cmd.run(lambda: self.intake.intake(False, 0.9), [self.intake])))
+
+        # Force intake to stow.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("X")).toggleOnTrue(
+            commands2.ParallelCommandGroup(
+                commands2.cmd.run(lambda: self.arm.set_setpoint("stow"), [self.arm]),
+                commands2.cmd.run(lambda: self.intake.intake(False, 0), [self.intake])))
+
+        # When the intake sensor detects a game piece, the robot begins flashing a green alert.
+        commands2.Trigger(lambda: self.intake.sensor.get()).whileFalse(
+            commands2.cmd.run(lambda: self.leds.flash_color([255, 0, 0], 5), [self.leds]))
+
+        # When left trigger is pressed, fire at the speed matched to the arm setpoint
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("LB")).whileTrue(
+            commands2.cmd.run(lambda: self.intake.bound_shoot(self.arm), [self.intake, self.arm]))
+
+        # Tap LB to engage turn-to-target-and-range.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("A")).whileTrue(
+            commands2.cmd.run(lambda: self.vision_system.range_and_turn_to_target(
+                self.robot_drive, 32),
+                              [self.robot_drive, self.vision_system]))
+
+        # Reset odometry with vision by using the AUTO PLAY.
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).toggleOnTrue(
+            commands2.cmd.runOnce(lambda: self.vision_system.calcs_toggle(), [self.vision_system]))
 
     def getAutonomousCommand(self) -> commands2.cmd:
         """Use this to pass the autonomous command to the main Robot class.

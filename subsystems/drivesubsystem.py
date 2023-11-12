@@ -102,6 +102,12 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BL.set_desired_state(swerve_module_states[2])
         self.m_BR.set_desired_state(swerve_module_states[3])
 
+        SmartDashboard.putNumberArray("Swerve Target States",
+                                      [swerve_module_states[0].angle.degrees(), swerve_module_states[0].speed,
+                                       swerve_module_states[1].angle.degrees(), swerve_module_states[1].speed,
+                                       swerve_module_states[2].angle.degrees(), swerve_module_states[2].speed,
+                                       swerve_module_states[3].angle.degrees(), swerve_module_states[3].speed])
+
         # if self.debug_mode is True:
         if True:
             SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
@@ -147,6 +153,11 @@ class DriveSubsystem(commands2.SubsystemBase):
         SmartDashboard.putNumber("Robot Pitch", self.gyro.getRoll())
         SmartDashboard.putBoolean("Balanced?", self.balanced)
         SmartDashboard.putString("Estimated Pose", str(self.get_pose()))
+        SmartDashboard.putNumberArray("Swerve Actual States",
+                                      [self.m_FL.get_state().angle.degrees(), self.m_FL.get_state().speed,
+                                       self.m_FR.get_state().angle.degrees(), self.m_FR.get_state().speed,
+                                       self.m_BL.get_state().angle.degrees(), self.m_BL.get_state().speed,
+                                       self.m_BR.get_state().angle.degrees(), self.m_BR.get_state().speed])
 
         if self.debug_mode is True:
             SmartDashboard.putNumber("FL Angle", self.m_FL.get_state().angle.degrees())

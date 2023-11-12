@@ -23,7 +23,7 @@ from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 
 
 def follow_trajectory(traj: PathPlannerTrajectory | Trajectory, first_path: bool, drive: DriveSubsystem) -> \
-        commands2.Swerve4ControllerCommand:
+        commands2.SequentialCommandGroup:
     """Return automated command to follow a generated trajectory."""
     theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
                                                     AutoConstants.kThetaControllerConstraints, 0.02)
@@ -45,7 +45,10 @@ def follow_trajectory(traj: PathPlannerTrajectory | Trajectory, first_path: bool
                                              drive.set_module_states,
                                              [drive]
                                              )
-    return scc
+    return commands2.SequentialCommandGroup(
+        scc,
+        commands2.cmd.runOnce(lambda: drive.drive(0, 0, 0, False), [drive])
+    )
 
 
 def generate_wpi_trajectory(start: Pose2d, waypoints: [Translation2d], end: Pose2d, vmax: float, amax: float) \
@@ -91,10 +94,12 @@ def AUTO_test_commands(vision: VisionSubsystem, drive: DriveSubsystem, leds: LED
     #         commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
     #     )
     # )
+    # TODO Figure out why conditional command is always doing the FALSE command in autonomous.
     return commands2.SequentialCommandGroup(
-        commands2.ConditionalCommand(VisionEstimate(vision, drive),
+        commands2.WaitCommand(1),
+        commands2.ConditionalCommand(commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds]),
                                      commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds]),
-                                     vision.tv == 1)
+                                     lambda: vision.has_targets())
     )
 
 
@@ -174,7 +179,7 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         inverted = False
     path1 = generate_wpi_trajectory(map_to_red(1.75, 4.43, 0, inverted),
                                     [map_to_red_trans(3.19, 4.94, inverted)],
-                                    map_to_red(6.73, 4.62, 5.53, inverted), 4, 3)
+                                    map_to_red(6.73, 4.62, 5.53, inverted), 4, 2)
     path_command_1 = follow_trajectory(path1, True, drive)
     return commands2.SequentialCommandGroup(
         ReturnWheels(drive),
@@ -189,25 +194,23 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
             path_command_1,
             commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
         ),
-        ReturnWheels(drive),
         Intake(intake, False, 0),
         SetArm(arm, "shoot_mid_back"),
         commands2.ParallelRaceGroup(
-            gen_and_run(drive.get_pose(),
-                        [map_to_red_trans(3.19, 4.94, inverted)],
-                        map_to_red(2.3, 4.6, 1, inverted), 4, 3, False, drive),
+            gen_and_run(map_to_red(6.73, 4.62, 5.53, inverted),
+                        [],
+                        map_to_red(2, 4.6, 1, inverted), 2, 2, False, drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds])
         ),
-        ReturnWheels(drive),
+        commands2.WaitCommand(1),
         SetArm(arm, "shoot_mid_back"),
         commands2.WaitCommand(0.5),
         Shoot(intake, "shoot_mid_back"),
         commands2.WaitCommand(0.5),
         SetArm(arm, "stow"),
         Intake(intake, False, 0),
-        ReturnWheels(drive),
         commands2.ParallelRaceGroup(
-            gen_and_run(drive.get_pose(), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False, drive),
+            gen_and_run(map_to_red(2, 4.6, 1, inverted), [], map_to_red(6.73, 4.62, 5.53, inverted), 2, 2, False, drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), [leds])
         )
     )
@@ -217,10 +220,11 @@ def AUTO_path_tuning(drive: DriveSubsystem, leds: LEDs, intake: IntakeSubsystem)
     # commands2.ConditionalCommand(commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), [leds]),
     #                              commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds]),
     #                              intake.sensor.get())
+    # 0.6096
     return commands2.SequentialCommandGroup(
         ReturnWheels(drive),
         commands2.ParallelRaceGroup(
-            gen_and_run(map_to_red(0, 0, 0, False), [], map_to_red(0.6096, 0, 0, False), 1, 1, True, drive),
+            gen_and_run(map_to_red(0, 0, 0, False), [], map_to_red(1, -1, 180, False), 3, 2, True, drive),
             commands2.cmd.run(lambda: leds.flash_color([255, 0, 0], 2), [leds])
         )
     )

@@ -23,6 +23,11 @@
     }
   },
   "Window": {
+    "###/SmartDashboard/Arm Mech2d": {
+      "Collapsed": "0",
+      "Pos": "470,630",
+      "Size": "432,200"
+    },
     "###/SmartDashboard/Auto Select": {
       "Collapsed": "0",
       "Pos": "175,284",
@@ -41,7 +46,7 @@
     "###Joysticks": {
       "Collapsed": "0",
       "Pos": "358,369",
-      "Size": "976,82"
+      "Size": "976,179"
     },
     "###NetworkTables": {
       "Collapsed": "0",
@@ -55,7 +60,7 @@
     },
     "###Other Devices": {
       "Collapsed": "0",
-      "Pos": "1408,29",
+      "Pos": "1436,29",
       "Size": "486,770"
     },
     "###PowerDistributions": {
