@@ -22,8 +22,8 @@ class ArmSubsystem(commands2.SubsystemBase):
 
     current_setpoint = "stow"
 
-    mech = Mechanism2d(3, 3)
-    mech_root = mech.getRoot("core", 0, 0)
+    mech = Mechanism2d(6, 3)
+    mech_root = mech.getRoot("core", 3, 0)
     mech_arm = mech_root.appendLigament("Arm", 3, 180)
 
     def __init__(self) -> None:
