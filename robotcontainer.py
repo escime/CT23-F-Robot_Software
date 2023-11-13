@@ -10,7 +10,7 @@ from subsystems.visionsubsystem import VisionSubsystem
 from subsystems.intakesubsystem import IntakeSubsystem
 from subsystems.armsubsystem import ArmSubsystem
 from wpilib import SmartDashboard, SendableChooser, DriverStation, DataLogManager
-import autoplays
+# import autoplays
 from commands.default_leds import DefaultLEDs
 # from commands.notifier_led import NotifierLEDs
 from commands.debug_mode import DebugMode
@@ -62,12 +62,12 @@ class RobotContainer:
         # Setup autonomous selector on the dashboard.
         self.m_chooser = SendableChooser()
         self.m_chooser.setDefaultOption("No-op", "No-op")
-        self.autos = []
-        for i in dir(autoplays):
-            if str(i[0:5]) == "AUTO_":
-                self.autos.append(str(i[5:]))
-        for j in self.autos:
-            self.m_chooser.addOption(j, j)
+        # self.autos = []
+        # for i in dir(autoplays):
+        #     if str(i[0:5]) == "AUTO_":
+        #         self.autos.append(str(i[5:]))
+        # for j in self.autos:
+        #     self.m_chooser.addOption(j, j)
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         SmartDashboard.putData("Debug Mode On", DebugMode(self.robot_drive, True))
@@ -152,11 +152,11 @@ class RobotContainer:
         # )
 
         # Reset odometry with vision by using the AUTO PLAY.
-        commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).onTrue(
-            commands2.SequentialCommandGroup(
-                commands2.cmd.runOnce(lambda: self.vision_system.calcs_toggle(), self.vision_system),
-                autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive))
-        )
+        # commands2.Trigger(lambda: self.driver_controller_raw.get_button("MENU")).onTrue(
+        #     commands2.SequentialCommandGroup(
+        #         commands2.cmd.runOnce(lambda: self.vision_system.calcs_toggle(), self.vision_system),
+        #         autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive))
+        # )
 
         # When the intake sensor detects a game piece, the robot begins flashing a green alert.
         commands2.Trigger(lambda: self.intake.sensor.get()).whileFalse(
@@ -196,15 +196,15 @@ class RobotContainer:
         """
         if self.m_chooser.getSelected() == "No-op":
             return None
-        elif self.m_chooser.getSelected() == "test_commands":
-            return autoplays.AUTO_test_commands(self.vision_system, self.robot_drive, self.leds, self.arm, self.intake)
-        elif self.m_chooser.getSelected() == "reset_with_vision":
-            return autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive)
-        elif self.m_chooser.getSelected() == "s_m_b":
-            return autoplays.AUTO_s_m_b(self.robot_drive, self.leds, self.arm, self.intake)
-        elif self.m_chooser.getSelected() == "simple_auto":
-            return autoplays.AUTO_simple_auto(self.robot_drive, self.leds, self.arm, self.intake)
-        elif self.m_chooser.getSelected() == "s_c_s_m_FLAT":
-            return autoplays.AUTO_s_c_s_m_FLAT(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "test_commands":
+        #     return autoplays.AUTO_test_commands(self.vision_system, self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "reset_with_vision":
+        #     return autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive)
+        # elif self.m_chooser.getSelected() == "s_m_b":
+        #     return autoplays.AUTO_s_m_b(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "simple_auto":
+        #     return autoplays.AUTO_simple_auto(self.robot_drive, self.leds, self.arm, self.intake)
+        # elif self.m_chooser.getSelected() == "s_c_s_m_FLAT":
+        #     return autoplays.AUTO_s_c_s_m_FLAT(self.robot_drive, self.leds, self.arm, self.intake)
         else:
             return None

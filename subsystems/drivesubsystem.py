@@ -1,7 +1,5 @@
 from rev import CANSparkMax
-# from phoenix6 import CANcoder, Pigeon2
-# from phoenix6.configs import pigeon2_configs
-from phoenix5 import CANCoder, Pigeon2
+from phoenix5.sensors import CANCoder, Pigeon2
 import commands2
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator

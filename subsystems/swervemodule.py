@@ -3,7 +3,7 @@ from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from wpimath.filter import SlewRateLimiter
 from rev import CANSparkMax
-from phoenix5.sensors import CANCoder, AbsoluteSensorRange, CANCoderStatusFrame
+from phoenix5.sensors import AbsoluteSensorRange, CANCoderStatusFrame, CANCoder
 from constants import DriveConstants
 import math
 
@@ -11,7 +11,7 @@ import math
 class SwerveModule:
     driveMotor: CANSparkMax
     rotateMotor: CANSparkMax
-    encoder: CANcoder
+    encoder: CANCoder
 
     def __init__(self, dm: CANSparkMax, rm: CANSparkMax, enc, mod_offset, turn_invert, drive_invert):
         # Connect the passed items to default variables.
