@@ -27,11 +27,13 @@ class VisionSubsystem(commands2.SubsystemBase):
     timer = Timer()
     turn_to_target_controller = PIDController(VisionConstants.turnkP, 0, 0)
     approach_target_controller = PIDController(VisionConstants.rangekP, 0, 0)
+    pipeline_id = 0
 
     def __init__(self, robot_drive: DriveSubsystem) -> None:
         super().__init__()
         self.robot_drive = robot_drive  # This is structurally not great but necessary for certain features.
         self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight")
+        # self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight2")
         self.timer.start()
         self.record_time = self.timer.get()
 
@@ -127,6 +129,8 @@ class VisionSubsystem(commands2.SubsystemBase):
                 self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 0:
                 self.limelight_table.putNumber("camMode", 0)
+        if self.limelight_table.getNumber("pipeline", 0) != self.pipeline_id:
+            self.limelight_table.putNumber("pipeline", self.pipeline_id)
 
         # if self.has_targets():
             # current_position = self.robot_drive.get_pose()
@@ -202,6 +206,9 @@ class VisionSubsystem(commands2.SubsystemBase):
             self.calc_override = False
         else:
             self.calc_override = True
+
+    def pipeline_switch(self, pipeline_id: int):
+        self.pipeline_id = pipeline_id
 
     def calculate_range_with_tag(self):
         if self.tag_id in [1, 2, 3, 6, 7, 8]:
