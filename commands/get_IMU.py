@@ -3,7 +3,7 @@ from subsystems.drivesubsystem import DriveSubsystem
 from wpilib import SmartDashboard
 
 
-class GetIMU(commands2.CommandBase):
+class GetIMU(commands2.Command):
     def __init__(self, robot_drive: DriveSubsystem):
         super().__init__()
         self.robot_drive = robot_drive

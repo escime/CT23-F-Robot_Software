@@ -16,33 +16,39 @@ from commands.intake import Intake
 from commands.turn import Turn
 from commands.drive_to_CS import DriveToCS
 from commands.vision_estimate import VisionEstimate
+from commands.swerve_controller import SwerveControllerCommand
 from wpilib import DriverStation
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig, Trajectory
 
 
+# def follow_trajectory(traj: Trajectory, first_path: bool, drive: DriveSubsystem) -> \
+#         commands2.Swerve4ControllerCommand:
 def follow_trajectory(traj: Trajectory, first_path: bool, drive: DriveSubsystem) -> \
-        commands2.Swerve4ControllerCommand:
+        SwerveControllerCommand:
     """Return automated command to follow a generated trajectory."""
     theta_controller = ProfiledPIDControllerRadians(AutoConstants.kPThetaController, 0, 0,
                                                     AutoConstants.kThetaControllerConstraints, 0.02)
     theta_controller.enableContinuousInput(-math.pi, math.pi)
-    # if type(traj) is PathPlannerTrajectory:
-    #     if first_path:
-    #         drive.reset_odometry(traj.getInitialHolonomicPose())
-    #     wpi_traj = traj.asWPILibTrajectory()
     if first_path:
         drive.reset_odometry(traj.initialPose())
-    wpi_traj = traj
-    scc = commands2.Swerve4ControllerCommand(wpi_traj,
-                                             drive.get_pose,
-                                             DriveConstants.m_kinematics,
-                                             PIDController(AutoConstants.kPXController, 0, 0),
-                                             PIDController(AutoConstants.kPYController, 0, 0),
-                                             theta_controller,
-                                             drive.set_module_states,
-                                             [drive]
-                                             )
+    # wpi_traj = traj
+    # scc = commands2.Swerve4ControllerCommand(wpi_traj,
+    #                                          drive.get_pose,
+    #                                          DriveConstants.m_kinematics,
+    #                                          PIDController(AutoConstants.kPXController, 0, 0),
+    #                                          PIDController(AutoConstants.kPYController, 0, 0),
+    #                                          theta_controller,
+    #                                          drive.set_module_states,
+    #                                          [drive]
+    #                                          )
+    scc = SwerveControllerCommand(traj,
+                                  DriveConstants.m_kinematics,
+                                  PIDController(AutoConstants.kPXController, 0, 0),
+                                  PIDController(AutoConstants.kPYController, 0, 0),
+                                  theta_controller,
+                                  traj.states()[-1].pose.rotation(),
+                                  drive)
     return scc
 
 
@@ -71,7 +77,10 @@ def map_to_red_trans(x: float, y: float, mapp: bool) -> [float, float]:
 def gen_and_run(start: Pose2d, waypoints: [Translation2d], end: Pose2d, vmax: float, amax: float, first_path: bool,
                 drive: DriveSubsystem) -> commands2.SequentialCommandGroup:
     """Generates a path following command based on the constraints for a path given."""
-    return follow_trajectory(generate_wpi_trajectory(start, waypoints, end, vmax, amax), first_path, drive)
+    return commands2.SequentialCommandGroup(
+        follow_trajectory(generate_wpi_trajectory(start, waypoints, end, vmax, amax), first_path, drive),
+        commands2.cmd.run(lambda: drive.drive(0, 0, 0, False), drive)
+    )
 
 
 def AUTO_test_commands(vision: VisionSubsystem, drive: DriveSubsystem, leds: LEDs,
@@ -187,7 +196,7 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         Intake(intake, False, 0),
         SetArm(arm, "shoot_mid_back"),
         commands2.ParallelRaceGroup(
-            gen_and_run(drive.get_pose(),
+            gen_and_run(map_to_red(6.73, 4.62, 5.53, inverted),
                         [map_to_red_trans(3.19, 4.94, inverted)],
                         map_to_red(2.3, 4.6, 1, inverted), 4, 3, False, drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 255, 0], 2), leds)
@@ -201,7 +210,8 @@ def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
         Intake(intake, False, 0),
         ReturnWheels(drive),
         commands2.ParallelRaceGroup(
-            gen_and_run(drive.get_pose(), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False, drive),
+            gen_and_run(map_to_red(2.3, 4.6, 1, inverted), [], map_to_red(6.73, 4.62, 5.53, inverted), 4, 3, False,
+                        drive),
             commands2.cmd.run(lambda: leds.flash_color([0, 0, 255], 2), leds)
         )
     )

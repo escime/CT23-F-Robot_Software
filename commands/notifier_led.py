@@ -2,7 +2,7 @@ import commands2
 from subsystems.leds import LEDs
 
 
-class NotifierLEDs(commands2.CommandBase):
+class NotifierLEDs(commands2.Command):
     def __init__(self, leds: LEDs, color: str, current: str):
         super().__init__()
         self.leds = leds

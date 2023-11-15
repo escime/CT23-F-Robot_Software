@@ -2,7 +2,7 @@ import commands2
 from subsystems.intakesubsystem import IntakeSubsystem
 
 
-class Shoot(commands2.CommandBase):
+class Shoot(commands2.Command):
     def __init__(self, intake: IntakeSubsystem, setpoint: str):
         super().__init__()
         self.intake = intake

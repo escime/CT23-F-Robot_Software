@@ -2,7 +2,7 @@ import commands2
 from subsystems.intakesubsystem import IntakeSubsystem
 
 
-class Intake(commands2.CommandBase):
+class Intake(commands2.Command):
     def __init__(self, intake: IntakeSubsystem, outtake: bool, speed: float):
         super().__init__()
         self.intake = intake

@@ -2,7 +2,7 @@ import commands2
 from subsystems.drivesubsystem import DriveSubsystem
 
 
-class Turn(commands2.CommandBase):
+class Turn(commands2.Command):
     def __init__(self, robot_drive: DriveSubsystem, target):
         super().__init__()
         self.robot_drive = robot_drive

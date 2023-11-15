@@ -4,7 +4,7 @@ from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.armsubsystem import ArmSubsystem
 
 
-class AutoLEDs(commands2.CommandBase):
+class AutoLEDs(commands2.Command):
     def __init__(self, drive: DriveSubsystem, arm: ArmSubsystem, leds: LEDs):
         super().__init__()
         self.leds = leds

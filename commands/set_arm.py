@@ -2,7 +2,7 @@ import commands2
 from subsystems.armsubsystem import ArmSubsystem
 
 
-class SetArm(commands2.CommandBase):
+class SetArm(commands2.Command):
     def __init__(self, arm: ArmSubsystem, setpoint: str):
         super().__init__()
         self.arm = arm

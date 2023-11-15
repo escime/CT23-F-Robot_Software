@@ -3,7 +3,7 @@ from subsystems.drivesubsystem import DriveSubsystem
 from constants import DriveConstants
 
 
-class DriveToCS(commands2.CommandBase):
+class DriveToCS(commands2.Command):
     def __init__(self, robot_drive: DriveSubsystem, direction: int):
         super().__init__()
         self.robot_drive = robot_drive

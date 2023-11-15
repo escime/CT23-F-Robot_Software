@@ -2,7 +2,7 @@ import commands2
 from subsystems.drivesubsystem import DriveSubsystem
 
 
-class DebugMode(commands2.CommandBase):
+class DebugMode(commands2.Command):
     def __init__(self, robot_drive: DriveSubsystem, on: bool):
         super().__init__()
         self.robot_drive = robot_drive

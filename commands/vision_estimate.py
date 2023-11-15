@@ -3,7 +3,7 @@ from subsystems.drivesubsystem import DriveSubsystem
 from subsystems.visionsubsystem import VisionSubsystem
 
 
-class VisionEstimate(commands2.CommandBase):
+class VisionEstimate(commands2.Command):
     def __init__(self, vision: VisionSubsystem, drive: DriveSubsystem):
         super().__init__()
         self.vision = vision

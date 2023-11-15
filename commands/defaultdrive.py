@@ -3,7 +3,7 @@ import commands2
 from subsystems.drivesubsystem import DriveSubsystem
 
 
-class DefaultDrive(commands2.CommandBase):
+class DefaultDrive(commands2.Command):
     def __init__(
         self,
         drive: DriveSubsystem,
@@ -22,7 +22,7 @@ class DefaultDrive(commands2.CommandBase):
         self.field_relative = field_relative
         self.teleop = teleop
 
-        self.addRequirements([self.drive])
+        self.addRequirements(self.drive)
 
     def initialize(self) -> None:
         self.drive.drive(self.x_speed, self.y_speed, self.rot, self.field_relative, self.teleop)
