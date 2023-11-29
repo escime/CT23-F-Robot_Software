@@ -36,6 +36,7 @@ class VisionSubsystem(commands2.SubsystemBase):
         # self.limelight_table = NetworkTableInstance.getDefault().getTable("limelight2")
         self.timer.start()
         self.record_time = self.timer.get()
+        self.latency = 0
 
     def toggle_leds(self, on: bool):
         if on:
@@ -49,7 +50,7 @@ class VisionSubsystem(commands2.SubsystemBase):
         """Update relevant values from LL NT to robot variables."""
         self.tv = self.limelight_table.getEntry("tv").getDouble(0)  # Get "target acquired" boolean as a 1.0 or 0.0.
         self.ta = self.limelight_table.getEntry("ta").getDouble(0)  # Get "target area of image" as a double.
-        # self.tl = self.limelight_table.getEntry("tl").getDouble(0)  # Get pipeline latency contribution. Unused.
+        self.tl = self.limelight_table.getEntry("tl").getDouble(0.0)  # Get pipeline latency contribution.
         self.ty = self.limelight_table.getEntry("ty").getDouble(0.0)
         self.tx = self.limelight_table.getEntry("tx").getDouble(0.0)
         self.tag_id = self.limelight_table.getEntry("tid").getDouble(0)
@@ -61,6 +62,7 @@ class VisionSubsystem(commands2.SubsystemBase):
             self.timestamp = float(timestamp_str)  # Update timestamp if JSON parse is successful.
         except ValueError:
             self.timestamp = -1
+        self.latency = self.timer.getFPGATimestamp() - (self.tl/1000.0) - (self.timestamp/1000.0)
 
     def has_targets(self) -> bool:
         """Checks if the limelight can see a target."""
@@ -100,10 +102,10 @@ class VisionSubsystem(commands2.SubsystemBase):
                 else:  # Robot is facing away from driver station.
                     self.pov = "back"
             if self.pov == "front":  # Camera target POV is front.
-                if self.limelight_table.getNumber("stream", -1) != 2:
+                if self.limelight_table.getNumber("stream", -1) != 2:  # CHANGED THIS AND FOLLOWING LINE FROM 2 TO 0
                     self.limelight_table.putNumber("stream", 2)
             else:  # Camera target POV is back.
-                if self.limelight_table.getNumber("stream", -1) != 1:
+                if self.limelight_table.getNumber("stream", -1) != 1:  # CHANGED THIS AND FOLLOWING LINE FROM 1 TO 0
                     self.limelight_table.putNumber("stream", 1)
             if self.limelight_table.getNumber("camMode", -1) != 1:
                 self.limelight_table.putNumber("camMode", 1)
@@ -122,7 +124,7 @@ class VisionSubsystem(commands2.SubsystemBase):
 
                     if abs(current_position.x - vision_estimate.x) < 1 and \
                             abs(current_position.y - vision_estimate.y) < 1:  # Sanity check for pose updates.
-                        self.robot_drive.add_vision(vision_estimate, self.timestamp)
+                        self.robot_drive.add_vision(vision_estimate, self.latency)
                 self.record_time = self.timer.get()
         else:  # Robot is in auto.
             if self.limelight_table.getNumber("stream", -1) != 1:

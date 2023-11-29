@@ -205,6 +205,16 @@ class RobotContainer:
                 self.robot_drive, SmartDashboard.getNumber("Auto Range Setting (in)", 100)),
                               [self.robot_drive, self.vision_system]))
 
+        # Tap RTHUMB to switch to neural detector
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("RTHUMB")).toggleOnTrue(
+            commands2.cmd.runOnce(lambda: self.vision_system.pipeline_switch(1), [self.vision_system])
+        )
+
+        # Tap LTHUMB to switch to neural detector
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("LTHUMB")).toggleOnTrue(
+            commands2.cmd.runOnce(lambda: self.vision_system.pipeline_switch(0), [self.vision_system])
+        )
+
     def configureTriggersProfile2(self):
         self.arm.setDefaultCommand(commands2.cmd.run(lambda: self.arm.auto_setpoint(self.robot_drive), [self.arm]))
 
