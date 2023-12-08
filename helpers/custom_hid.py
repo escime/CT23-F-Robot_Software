@@ -187,3 +187,7 @@ class CustomHID:
 
         # print("DIRECTION: " + str(self.direction))
         return self.direction
+
+    def refine_trigger(self, trigger: str, deadband: float, maxi: float, mini: float) -> float:
+        """Modification of get_trigger() that refines its output between a maximum and a minimum value"""
+        return self.get_trigger(trigger, deadband) * (maxi - mini) + mini

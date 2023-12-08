@@ -28,7 +28,6 @@ class SwerveModule:
 
         self.encoder.setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20)
         self.encoder.setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 20)
-        # self.encoder.configSensorDirection(not turn_invert)
         self.encoder.setPositionToAbsolute()
         self.encoder.configMagnetOffset(mod_offset)
         self.encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180)
@@ -36,7 +35,6 @@ class SwerveModule:
         # Invert motors based on the passthrough on instantiation.
         self.driveMotor.setInverted(drive_invert)
         self.rotateMotor.setInverted(turn_invert)
-        # print("HELLO, here's this encoder's inversion!" + str(self.encoder.getAllConfigs))
 
         # Set initial state as pointed straight forward @ zero speed.
         self._requested_turn = 0

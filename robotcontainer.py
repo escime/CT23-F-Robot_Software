@@ -26,7 +26,6 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
-        # TODO Check if Datalogger slows everything down
         DataLogManager.start()
         DriverStation.startDataLog(DataLogManager.getLog(), True)
         # Instantiate subsystems using their constructors.
@@ -86,7 +85,7 @@ class RobotContainer:
                 self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
                 self.driver_controller_raw.get_axis("RX", 0.06) * DriveConstants.kMaxAngularSpeed,
                 True,
-                0.5), [self.robot_drive]))
+                self.driver_controller_raw.refine_trigger("RT", 0.05, 0.9, 0.1)), [self.robot_drive]))
 
         # Press any direction on the D-pad to enable PID snap to that equivalent angle based on field orientation
         commands2.Trigger(lambda: self.driver_controller_raw.get_d_pad_pull("W")).toggleOnTrue(
