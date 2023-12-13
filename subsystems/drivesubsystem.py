@@ -10,6 +10,8 @@ from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants, ModuleConstants, AutoConstants
 from wpilib import SmartDashboard, Field2d
 import math
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
 
 
 class DriveSubsystem(commands2.SubsystemBase):
@@ -44,6 +46,21 @@ class DriveSubsystem(commands2.SubsystemBase):
         # Setup a couple indicators.
         self.balanced = True
         self.debug_mode = False
+
+        AutoBuilder.configureHolonomic(
+            self.get_pose,
+            self.reset_odometry,
+            self.get_chassis_speeds,
+            self.drive_by_chassis_speeds,
+            HolonomicPathFollowerConfig(
+                PIDConstants(AutoConstants.kPXController, 0, 0),
+                PIDConstants(AutoConstants.kPYController, 0, 0),
+                AutoConstants.max_module_speed,
+                AutoConstants.module_radius_from_center,
+                ReplanningConfig()
+            ),
+            self
+        )
 
     # Instantiate all swerve modules.
     m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
@@ -83,6 +100,23 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Create Field2d object to display/track robot position.
     m_field = Field2d()
 
+    def get_chassis_speeds(self):
+        """Used for 2024 PathPlanner."""
+        return DriveConstants.m_kinematics.toChassisSpeeds(self.m_FL.get_state(),
+                                                           self.m_FR.get_state(),
+                                                           self.m_BL.get_state(),
+                                                           self.m_BR.get_state())
+
+    def drive_by_chassis_speeds(self, chassis_speeds: ChassisSpeeds):
+        """Used for 2024 PathPlanner."""
+        swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(chassis_speeds)
+
+        # Set all swerve module state targets and update the dashboard with the targets.
+        self.m_FL.set_desired_state(swerve_module_states[0])
+        self.m_FR.set_desired_state(swerve_module_states[1])
+        self.m_BL.set_desired_state(swerve_module_states[2])
+        self.m_BR.set_desired_state(swerve_module_states[3])
+
     def drive(self, x_speed, y_speed, rot, field_relative) -> None:
         """The default drive command for the robot. This is the math that makes swerve drive work."""
         # If in field relative mode, get swerve module states.
@@ -105,7 +139,7 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_BR.set_desired_state(swerve_module_states[3])
 
         # if self.debug_mode is True:
-        if True:
+        if self.debug_mode:
             SmartDashboard.putNumber("FL Target", swerve_module_states[0].angle.degrees())
             SmartDashboard.putNumber("FL Target Speed", swerve_module_states[0].speed)
             SmartDashboard.putNumber("FR Target", swerve_module_states[1].angle.degrees())

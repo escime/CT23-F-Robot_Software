@@ -66,6 +66,8 @@ class AutoConstants:
     kPThetaController = 10
     kThetaControllerConstraints = TrapezoidProfileRadians.Constraints(kMaxSpeedMetersPerSecond,
                                                                       kMaxAccelerationMetersPerSecondSquared)
+    max_module_speed = 4.5
+    module_radius_from_center = 0.3451
 
 
 class OIConstants:
