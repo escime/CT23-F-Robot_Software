@@ -26,7 +26,6 @@ class DriveSubsystem(commands2.SubsystemBase):
 
         # Reset odometry @ instantiation.
         self.gyro.setYaw(0)
-        self.reset_encoders()
 
         # Setup snap controller for class-wide use.
         self.snap_controller = PIDController(DriveConstants.snap_controller_PID[0],
@@ -43,37 +42,39 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.balanced = True
         self.debug_mode = False
 
-    # Instantiate all swerve modules.
-    m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(ModuleConstants.fl_turn_id, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(ModuleConstants.fl_encoder_id),
-                        ModuleConstants.fl_zero_offset,
-                        True,
-                        True)
-    m_FR = SwerveModule(CANSparkMax(ModuleConstants.fr_drive_id, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(ModuleConstants.fr_turn_id, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(ModuleConstants.fr_encoder_id),
-                        ModuleConstants.fr_zero_offset,
-                        True,
-                        True)
-    m_BL = SwerveModule(CANSparkMax(ModuleConstants.bl_drive_id, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(ModuleConstants.bl_turn_id, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(ModuleConstants.bl_encoder_id),
-                        ModuleConstants.bl_zero_offset,
-                        True,
-                        True)
-    m_BR = SwerveModule(CANSparkMax(ModuleConstants.br_drive_id, CANSparkMax.MotorType.kBrushless),
-                        CANSparkMax(ModuleConstants.br_turn_id, CANSparkMax.MotorType.kBrushless),
-                        CANCoder(ModuleConstants.br_encoder_id),
-                        ModuleConstants.br_zero_offset,
-                        True,
-                        True)
+        # Instantiate all swerve modules.
+        self.m_FL = SwerveModule(CANSparkMax(ModuleConstants.fl_drive_id, CANSparkMax.MotorType.kBrushless),
+                                 CANSparkMax(ModuleConstants.fl_turn_id, CANSparkMax.MotorType.kBrushless),
+                                 CANCoder(ModuleConstants.fl_encoder_id),
+                                 ModuleConstants.fl_zero_offset,
+                                 True,
+                                 True)
+        self.m_FR = SwerveModule(CANSparkMax(ModuleConstants.fr_drive_id, CANSparkMax.MotorType.kBrushless),
+                                 CANSparkMax(ModuleConstants.fr_turn_id, CANSparkMax.MotorType.kBrushless),
+                                 CANCoder(ModuleConstants.fr_encoder_id),
+                                 ModuleConstants.fr_zero_offset,
+                                 True,
+                                 True)
+        self.m_BL = SwerveModule(CANSparkMax(ModuleConstants.bl_drive_id, CANSparkMax.MotorType.kBrushless),
+                                 CANSparkMax(ModuleConstants.bl_turn_id, CANSparkMax.MotorType.kBrushless),
+                                 CANCoder(ModuleConstants.bl_encoder_id),
+                                 ModuleConstants.bl_zero_offset,
+                                 True,
+                                 True)
+        self.m_BR = SwerveModule(CANSparkMax(ModuleConstants.br_drive_id, CANSparkMax.MotorType.kBrushless),
+                                 CANSparkMax(ModuleConstants.br_turn_id, CANSparkMax.MotorType.kBrushless),
+                                 CANCoder(ModuleConstants.br_encoder_id),
+                                 ModuleConstants.br_zero_offset,
+                                 True,
+                                 True)
 
-    # Set initial value of software-tracked position.
-    m_FL_position = m_FL.get_position()
-    m_FR_position = m_FR.get_position()
-    m_BL_position = m_BL.get_position()
-    m_BR_position = m_BR.get_position()
+        # Set initial value of software-tracked position.
+        self.m_FL_position = self.m_FL.get_position()
+        self.m_FR_position = self.m_FR.get_position()
+        self.m_BL_position = self.m_BL.get_position()
+        self.m_BR_position = self.m_BR.get_position()
+
+        self.reset_encoders()
 
     # Instantiate gyro.
     gyro = Pigeon2(9)
