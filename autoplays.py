@@ -109,7 +109,7 @@ def AUTO_reset_with_vision(vision: VisionSubsystem, drive: DriveSubsystem) -> co
     )
 
 
-def AUTO_s_m_b(drive: DriveSubsystem, leds: LEDs,
+def s_m_b(drive: DriveSubsystem, leds: LEDs,
                arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     """Score -> Mobility -> Balance."""
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
@@ -144,7 +144,7 @@ def AUTO_s_m_b(drive: DriveSubsystem, leds: LEDs,
     )
 
 
-def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
+def simple_auto(drive: DriveSubsystem, leds: LEDs,
                      arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     """Score -> Mobility."""
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
@@ -168,7 +168,7 @@ def AUTO_simple_auto(drive: DriveSubsystem, leds: LEDs,
     )
 
 
-def AUTO_s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
+def s_c_s_m_FLAT(drive: DriveSubsystem, leds: LEDs,
                       arm: ArmSubsystem, intake: IntakeSubsystem) -> commands2.SequentialCommandGroup:
     """Score -> Collect -> Score -> Mobility | Flat Side Auto"""
     if DriverStation.getAlliance() == DriverStation.Alliance.kRed:

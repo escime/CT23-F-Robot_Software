@@ -12,10 +12,13 @@ from subsystems.armsubsystem import ArmSubsystem
 from wpilib import SmartDashboard, SendableChooser, DriverStation, DataLogManager
 # import autoplays
 from commands.default_leds import DefaultLEDs
-# from commands.notifier_led import NotifierLEDs
 from commands.debug_mode import DebugMode
-# from commands.auto_leds import AutoLEDs
+from commands.return_wheels import ReturnWheels
+from commands.set_arm import SetArm
+from commands.intake import Intake
+from commands.shoot import Shoot
 from helpers.custom_hid import CustomHID
+from pathplannerlib.auto import NamedCommands, PathPlannerAuto
 
 
 class RobotContainer:
@@ -56,18 +59,17 @@ class RobotContainer:
         # Set default LED command.
         self.leds.setDefaultCommand(DefaultLEDs(self.leds))
 
+        # Register commands for PathPlanner access.
+        self.registerCommands()
+
         # Setup for all event-trigger commands.
         self.configureTriggers()
 
         # Setup autonomous selector on the dashboard.
         self.m_chooser = SendableChooser()
-        self.m_chooser.setDefaultOption("No-op", "No-op")
-        # self.autos = []
-        # for i in dir(autoplays):
-        #     if str(i[0:5]) == "AUTO_":
-        #         self.autos.append(str(i[5:]))
-        # for j in self.autos:
-        #     self.m_chooser.addOption(j, j)
+        self.m_chooser.setDefaultOption("No-op", "N-op")
+        self.m_chooser.addOption("Test", "Test")
+
         SmartDashboard.putData("Auto Select", self.m_chooser)
 
         SmartDashboard.putData("Debug Mode On", DebugMode(self.robot_drive, True))
@@ -196,15 +198,14 @@ class RobotContainer:
         """
         if self.m_chooser.getSelected() == "No-op":
             return None
-        # elif self.m_chooser.getSelected() == "test_commands":
-        #     return autoplays.AUTO_test_commands(self.vision_system, self.robot_drive, self.leds, self.arm, self.intake)
-        # elif self.m_chooser.getSelected() == "reset_with_vision":
-        #     return autoplays.AUTO_reset_with_vision(self.vision_system, self.robot_drive)
-        # elif self.m_chooser.getSelected() == "s_m_b":
-        #     return autoplays.AUTO_s_m_b(self.robot_drive, self.leds, self.arm, self.intake)
-        # elif self.m_chooser.getSelected() == "simple_auto":
-        #     return autoplays.AUTO_simple_auto(self.robot_drive, self.leds, self.arm, self.intake)
-        # elif self.m_chooser.getSelected() == "s_c_s_m_FLAT":
-        #     return autoplays.AUTO_s_c_s_m_FLAT(self.robot_drive, self.leds, self.arm, self.intake)
+        elif self.m_chooser.getSelected() == "Test":
+            return PathPlannerAuto("Test")
         else:
             return None
+
+    def registerCommands(self):
+        NamedCommands.registerCommand("return_wheels", ReturnWheels(self.robot_drive))
+        NamedCommands.registerCommand("set_arm_stow", SetArm(self.arm, "stow"))
+        NamedCommands.registerCommand("set_arm_intake", SetArm(self.arm, "intake"))
+        NamedCommands.registerCommand("intake", Intake(self.intake, False, 1))
+        NamedCommands.registerCommand("shoot", Shoot(self.intake, "shoot_high_back"))
