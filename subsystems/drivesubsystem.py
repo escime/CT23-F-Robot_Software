@@ -8,7 +8,7 @@ from wpimath.controller import PIDController, ProfiledPIDControllerRadians
 from wpimath.trajectory import TrajectoryGenerator, TrajectoryConfig
 from subsystems.swervemodule import SwerveModule
 from constants import DriveConstants, ModuleConstants, AutoConstants
-from wpilib import SmartDashboard, Field2d
+from wpilib import SmartDashboard, Field2d, Timer
 import math
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
@@ -47,6 +47,7 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.balanced = True
         self.debug_mode = False
 
+        # TODO Check
         AutoBuilder.configureHolonomic(
             self.get_pose,
             self.reset_odometry,
@@ -100,6 +101,13 @@ class DriveSubsystem(commands2.SubsystemBase):
     # Create Field2d object to display/track robot position.
     m_field = Field2d()
 
+    # Start timer for 2nd order kinematics.
+    # TODO Disable this if 2ko is not being used.
+    timer = Timer()
+    timer.start()
+    last_time = 0
+    current_time = timer.get()
+
     def get_chassis_speeds(self):
         """Used for 2024 PathPlanner."""
         return DriveConstants.m_kinematics.toChassisSpeeds(self.m_FL.get_state(),
@@ -116,6 +124,26 @@ class DriveSubsystem(commands2.SubsystemBase):
         self.m_FR.set_desired_state(swerve_module_states[1])
         self.m_BL.set_desired_state(swerve_module_states[2])
         self.m_BR.set_desired_state(swerve_module_states[3])
+
+    def drive_2ok(self, x_speed: float, y_speed: float, rot: float, field_relative: bool) -> None:
+        """Drive the robot with second order kinematics enabled."""
+        self.current_time = self.timer.get()
+        if not field_relative:
+            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
+                ChassisSpeeds.discretize(-x_speed, -y_speed, -rot, self.current_time - self.last_time)
+            )
+        else:
+            swerve_module_states = DriveConstants.m_kinematics.toSwerveModuleStates(
+                ChassisSpeeds.discretize(
+                    ChassisSpeeds.fromFieldRelativeSpeeds(-x_speed,
+                                                          -y_speed,
+                                                          -rot,
+                                                          Rotation2d.fromDegrees(-self.get_heading())),
+                    self.current_time - self.last_time
+                )
+            )
+            self.set_module_states(swerve_module_states)
+            self.last_time = self.timer.get()
 
     def drive(self, x_speed, y_speed, rot, field_relative) -> None:
         """The default drive command for the robot. This is the math that makes swerve drive work."""

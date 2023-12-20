@@ -19,6 +19,7 @@ from commands.intake import Intake
 from commands.shoot import Shoot
 from helpers.custom_hid import CustomHID
 from pathplannerlib.auto import NamedCommands, PathPlannerAuto
+from commands2 import TimedCommandRobot
 
 
 class RobotContainer:
@@ -48,11 +49,11 @@ class RobotContainer:
 
         # Set the default drive command.
         self.robot_drive.setDefaultCommand(commands2.cmd.run(
-            lambda: self.robot_drive.drive(self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
-                                           self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
-                                           self.driver_controller_raw.get_axis("RX", 0.06) *
-                                           DriveConstants.kMaxAngularSpeed,
-                                           True),
+            lambda: self.robot_drive.drive_2ok(self.driver_controller_raw.get_axis("LY", 0.06) * DriveConstants.kMaxSpeed,
+                                               self.driver_controller_raw.get_axis("LX", 0.06) * DriveConstants.kMaxSpeed,
+                                               self.driver_controller_raw.get_axis("RX", 0.06) *
+                                               DriveConstants.kMaxAngularSpeed,
+                                               True,),
             self.robot_drive
         ))
 
