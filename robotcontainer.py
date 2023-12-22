@@ -6,6 +6,7 @@ from constants import OIConstants
 from subsystems.leds import LEDs
 from wpilib import SmartDashboard, SendableChooser
 from commands.default_leds import DefaultLEDs
+from commands.shoot_leds import ShootLEDs
 from helpers.custom_hid import CustomHID
 
 
@@ -18,7 +19,7 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
-        self.leds = LEDs(0, 30, 1, 0.03, "GRB")
+        self.leds = LEDs(0, 45, 1, 0.03, "GRB")
 
         # Setup driver & operator controllers.
         self.driver_controller_raw = CustomHID(OIConstants.kDriverControllerPort, "xbox")
@@ -43,4 +44,8 @@ class RobotContainer:
     def configureTriggers(self) -> None:
         """Used to set up any commands that trigger when a measured event occurs."""
         commands2.Trigger(lambda: self.driver_controller_raw.get_button("A")).toggleOnTrue(
-            commands2.cmd.run(lambda: self.leds.flash_color([255, 0, 0], 2), [self.leds]))
+            ShootLEDs(self.leds, "default"))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("B")).toggleOnTrue(
+            ShootLEDs(self.leds, "fast"))
+        commands2.Trigger(lambda: self.driver_controller_raw.get_button("X")).toggleOnTrue(
+            ShootLEDs(self.leds, "fastest"))
